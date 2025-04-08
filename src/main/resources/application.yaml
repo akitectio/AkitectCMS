@@ -1,0 +1,169 @@
+spring:
+  application:
+    name: akitect-cms
+
+  # C?u hình c? s? d? li?u
+  datasource:
+    url: jdbc:postgresql://localhost:5432/akitectcms
+    username: postgres
+    password: 123456
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      pool-name: AkitectCmsHikariCP
+      max-lifetime: 2000000
+      connection-timeout: 30000
+
+  # C?u hình JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: none # Trong môi tr??ng production nên ??t là "validate" ho?c "none"
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+        globally_quoted_identifiers: true
+    show-sql: true # Nên ??t là false trong môi tr??ng production
+
+  # C?u hình Thymeleaf
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false # Nên ??t là true trong môi tr??ng production
+    servlet:
+      content-type: text/html
+
+  # C?u hình g?i email
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your-email@gmail.com
+    password: your-email-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  # C?u hình upload file
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 2KB
+      max-file-size: 10MB
+      max-request-size: 15MB
+
+  # C?u hình b?o m?t
+  security:
+    user:
+      name: admin
+      password: admin # Ch? dùng cho development
+    basic:
+      enabled: false
+    remember-me:
+      key: akitectCmsSecretKey
+      token-validity-seconds: 2592000 # 30 days
+
+  # C?u hình session
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    timeout: 3600 # 1 hour
+
+  # C?u hình cache
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterAccess=600s
+
+# C?u hình server
+server:
+  port: 8080
+  servlet:
+    context-path: /
+    session:
+      cookie:
+        http-only: true
+        secure: false # Nên ??t là true khi s? d?ng HTTPS
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json
+    min-response-size: 1024
+  error:
+    whitelabel:
+      enabled: false
+    include-stacktrace: never # Ho?c "always" trong môi tr??ng development
+
+# C?u hình logging
+logging:
+  level:
+    root: INFO
+    io.akitect.cms: DEBUG
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.hibernate.SQL: DEBUG # Nên ??t là INFO trong môi tr??ng production
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Nên ??t là INFO trong môi tr??ng production
+  file:
+    name: logs/akitect-cms.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# C?u hình riêng cho ?ng d?ng
+akitect:
+  cms:
+    # C?u hình upload
+    upload:
+      dir: ${user.home}/akitect-cms/uploads
+      allowed-content-types: image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/mp4
+
+    # C?u hình JWT (n?u s? d?ng)
+    jwt:
+      secret: akitectCmsJwtSecretKey
+      expiration: 86400000 # 1 day
+
+    # C?u hình phân trang
+    pagination:
+      default-page-size: 10
+      max-page-size: 100
+
+    # C?u hình URL
+    url:
+      frontend: http://localhost:8080
+      admin: http://localhost:8080/admin
+
+    # C?u hình SEO
+    seo:
+      default-title: AkitectCMS - H? th?ng qu?n lý n?i dung giáo d?c
+      default-description: AkitectCMS là h? th?ng qu?n lý tài nguyên n?i dung giáo d?c mã ngu?n m?.
+      default-keywords: CMS, education, learning, courses, open source
+      google-analytics-id:
+
+    # C?u hình Redis (n?u s? d?ng)
+    redis:
+      enabled: false
+      host: localhost
+      port: 6379
+      password:
+
+
+# C?u hình Actuator endpoints (spring-boot-actuator)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  info:
+    git:
+      mode: full
