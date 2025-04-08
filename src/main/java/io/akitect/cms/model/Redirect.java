@@ -1,5 +1,6 @@
 package io.akitect.cms.model;
 
+import io.akitect.cms.model.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
