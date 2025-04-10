@@ -25,10 +25,10 @@ public class PostRevision {
     @Column(name = "title", length = 255, nullable = false)
     private String title;
 
-    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "content", columnDefinition = "text", nullable = false)
     private String content;
 
-    @Column(name = "excerpt", columnDefinition = "TEXT")
+    @Column(name = "excerpt", columnDefinition = "text")
     private String excerpt;
 
     @Column(name = "revision_number", nullable = false)

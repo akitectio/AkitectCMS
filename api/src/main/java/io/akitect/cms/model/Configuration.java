@@ -14,7 +14,7 @@ public class Configuration extends BaseEntity {
     @Column(name = "config_key", length = 100, nullable = false, unique = true)
     private String configKey;
 
-    @Column(name = "config_value", columnDefinition = "TEXT")
+    @Column(name = "config_value", columnDefinition = "text")
     private String configValue;
 
     @Column(name = "config_group", length = 50, nullable = false)

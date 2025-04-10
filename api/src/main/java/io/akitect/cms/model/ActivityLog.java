@@ -34,10 +34,10 @@ public class ActivityLog {
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
-    @Column(name = "user_agent", columnDefinition = "TEXT")
+    @Column(name = "user_agent", columnDefinition = "text")
     private String userAgent;
 
-    @Column(name = "details", columnDefinition = "TEXT")
+    @Column(name = "details", columnDefinition = "text")
     private String details;
 
     @Column(name = "created_at", nullable = false)

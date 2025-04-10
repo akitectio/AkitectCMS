@@ -21,7 +21,7 @@ public class Series extends BaseEntity {
     @Column(name = "slug", length = 300, nullable = false, unique = true)
     private String slug;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
     @Column(name = "cover_image_url", length = 255)
@@ -42,13 +42,13 @@ public class Series extends BaseEntity {
     @Column(name = "meta_title", length = 255)
     private String metaTitle;
 
-    @Column(name = "meta_description", columnDefinition = "TEXT")
+    @Column(name = "meta_description", columnDefinition = "text")
     private String metaDescription;
 
     @Column(name = "is_featured", nullable = false)
     private boolean featured = false;
 
-    @Column(name = "prerequisites", columnDefinition = "TEXT")
+    @Column(name = "prerequisites", columnDefinition = "text")
     private String prerequisites;
 
     @Column(name = "views_count", nullable = false)

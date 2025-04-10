@@ -47,7 +47,7 @@ public class Media extends BaseEntity {
     @Column(name = "title", length = 255)
     private String title;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)

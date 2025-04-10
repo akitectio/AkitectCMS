@@ -17,13 +17,13 @@ public class EmailTemplate extends BaseEntity {
     @Column(name = "subject", length = 255, nullable = false)
     private String subject;
 
-    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "content", columnDefinition = "text", nullable = false)
     private String content;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
-    @Column(name = "variables", columnDefinition = "TEXT")
+    @Column(name = "variables", columnDefinition = "text")
     private String variables;
 
     @Column(name = "is_active", nullable = false)

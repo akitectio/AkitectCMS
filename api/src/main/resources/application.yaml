@@ -1,8 +1,6 @@
 spring:
   application:
     name: akitect-cms
-
-  # C?u hình c? s? d? li?u
   datasource:
     url: jdbc:postgresql://localhost:5432/akitectcms
     username: postgres
@@ -16,30 +14,22 @@ spring:
       max-lifetime: 2000000
       connection-timeout: 30000
 
-  # C?u hình JPA/Hibernate
   jpa:
     hibernate:
-      ddl-auto: none # Trong môi tr??ng production nên ??t là "validate" ho?c "none"
+      ddl-auto: none
     properties:
       hibernate:
+        hbm2ddl:
+          schema-generation:
+            foreign-key-constraint-creation: AFTER_TABLE_CREATION
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         jdbc:
           time_zone: UTC
         globally_quoted_identifiers: true
-    show-sql: true # Nên ??t là false trong môi tr??ng production
+    show-sql: true
 
-  # C?u hình Thymeleaf
-  thymeleaf:
-    prefix: classpath:/templates/
-    suffix: .html
-    mode: HTML
-    encoding: UTF-8
-    cache: false # Nên ??t là true trong môi tr??ng production
-    servlet:
-      content-type: text/html
 
-  # C?u hình g?i email
   mail:
     host: smtp.gmail.com
     port: 587
@@ -52,7 +42,6 @@ spring:
           starttls:
             enable: true
 
-  # C?u hình upload file
   servlet:
     multipart:
       enabled: true
@@ -60,31 +49,26 @@ spring:
       max-file-size: 10MB
       max-request-size: 15MB
 
-  # C?u hình b?o m?t
   security:
     user:
       name: admin
-      password: admin # Ch? dùng cho development
+      password: admin
     basic:
       enabled: false
     remember-me:
       key: akitectCmsSecretKey
-      token-validity-seconds: 2592000 # 30 days
+      token-validity-seconds: 2592000
 
-  # C?u hình session
   session:
     store-type: jdbc
     jdbc:
       initialize-schema: always
-    timeout: 3600 # 1 hour
-
-  # C?u hình cache
+    timeout: 3600
   cache:
     type: caffeine
     caffeine:
       spec: maximumSize=500,expireAfterAccess=600s
 
-# C?u hình server
 server:
   port: 8080
   servlet:
@@ -92,7 +76,7 @@ server:
     session:
       cookie:
         http-only: true
-        secure: false # Nên ??t là true khi s? d?ng HTTPS
+        secure: false
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json
@@ -100,54 +84,41 @@ server:
   error:
     whitelabel:
       enabled: false
-    include-stacktrace: never # Ho?c "always" trong môi tr??ng development
+    include-stacktrace: never
 
-# C?u hình logging
 logging:
   level:
     root: INFO
     io.akitect.cms: DEBUG
     org.springframework: INFO
     org.hibernate: INFO
-    org.hibernate.SQL: DEBUG # Nên ??t là INFO trong môi tr??ng production
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Nên ??t là INFO trong môi tr??ng production
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   file:
     name: logs/akitect-cms.log
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
-# C?u hình riêng cho ?ng d?ng
 akitect:
   cms:
-    # C?u hình upload
     upload:
       dir: ${user.home}/akitect-cms/uploads
       allowed-content-types: image/jpeg,image/png,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/mp4
 
-    # C?u hình JWT (n?u s? d?ng)
     jwt:
-      secret: akitectCmsJwtSecretKey
-      expiration: 86400000 # 1 day
+      secret: =p2s5v8y/B?E(H+MbQeThWmZq4t7w!z%C*F)J@NcRfUjXn2r5u8x/A?D(G+KbPeSgVkYp3s6v9y$B&E)H@McQfTjWmZq4t7w!z%C*F-JaNdRgUk
+      expiration: 86400000
 
-    # C?u hình phân trang
     pagination:
       default-page-size: 10
       max-page-size: 100
 
-    # C?u hình URL
     url:
       frontend: http://localhost:8080
       admin: http://localhost:8080/admin
 
-    # C?u hình SEO
-    seo:
-      default-title: AkitectCMS - H? th?ng qu?n lý n?i dung giáo d?c
-      default-description: AkitectCMS là h? th?ng qu?n lý tài nguyên n?i dung giáo d?c mã ngu?n m?.
-      default-keywords: CMS, education, learning, courses, open source
-      google-analytics-id:
 
-    # C?u hình Redis (n?u s? d?ng)
     redis:
       enabled: false
       host: localhost
@@ -155,7 +126,6 @@ akitect:
       password:
 
 
-# C?u hình Actuator endpoints (spring-boot-actuator)
 management:
   endpoints:
     web:

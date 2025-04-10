@@ -21,10 +21,10 @@ public class Post extends BaseEntity {
     @Column(name = "slug", length = 300, nullable = false, unique = true)
     private String slug;
 
-    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "content", columnDefinition = "text", nullable = false)
     private String content;
 
-    @Column(name = "excerpt", columnDefinition = "TEXT")
+    @Column(name = "excerpt", columnDefinition = "text")
     private String excerpt;
 
     @Column(name = "featured_image_url", length = 255)
@@ -39,7 +39,7 @@ public class Post extends BaseEntity {
     @Column(name = "meta_title", length = 255)
     private String metaTitle;
 
-    @Column(name = "meta_description", columnDefinition = "TEXT")
+    @Column(name = "meta_description", columnDefinition = "text")
     private String metaDescription;
 
     @Column(name = "is_featured", nullable = false)

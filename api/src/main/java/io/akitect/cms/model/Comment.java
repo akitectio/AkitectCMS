@@ -14,7 +14,7 @@ import java.util.Set;
 @Setter
 public class Comment extends BaseEntity {
 
-    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "content", columnDefinition = "text", nullable = false)
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
