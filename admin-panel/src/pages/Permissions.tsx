@@ -266,12 +266,6 @@ const Permissions = () => {
                             <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
                               Name {getSortIcon('name')}
                             </th>
-                            <th onClick={() => handleSort('key')} style={{ cursor: 'pointer' }}>
-                              Key {getSortIcon('key')}
-                            </th>
-                            <th onClick={() => handleSort('module')} style={{ cursor: 'pointer' }}>
-                              Module {getSortIcon('module')}
-                            </th>
                             <th onClick={() => handleSort('description')} style={{ cursor: 'pointer' }}>
                               Description {getSortIcon('description')}
                             </th>
@@ -284,8 +278,6 @@ const Permissions = () => {
                               <tr key={permission.id}>
                                 <td>{permission.id}</td>
                                 <td>{permission.name}</td>
-                                <td><code>{permission.key}</code></td>
-                                <td>{permission.module}</td>
                                 <td>{permission.description}</td>
                                 <td>
                                   <Button
@@ -361,27 +353,7 @@ const Permissions = () => {
                 onChange={(e) => setFormDescription(e.target.value)}
               />
             </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Module</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Enter module name (e.g., users, posts, etc.)"
-                value={formModule}
-                onChange={(e) => setFormModule(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Key</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Enter permission key (e.g., users.create)"
-                value={formKey}
-                onChange={(e) => setFormKey(e.target.value)}
-              />
-              <Form.Text className="text-muted">
-                This should be a unique identifier for the permission
-              </Form.Text>
-            </Form.Group>
+           
           </Form>
         </Modal.Body>
         <Modal.Footer>

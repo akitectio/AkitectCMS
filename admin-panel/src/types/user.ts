@@ -20,8 +20,6 @@ export interface Permission {
   id: number;
   name: string;
   description: string;
-  module: string; // The module/section this permission applies to
-  key: string; // Unique identifier for this permission (e.g., "users.create")
   createdAt: string;
   updatedAt: string;
 }
@@ -29,13 +27,9 @@ export interface Permission {
 export interface PermissionCreateRequest {
   name: string;
   description: string;
-  module: string;
-  key: string;
 }
 
 export interface PermissionUpdateRequest {
   name?: string;
   description?: string;
-  module?: string;
-  key?: string;
 }
