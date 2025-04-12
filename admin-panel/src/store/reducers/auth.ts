@@ -1,5 +1,4 @@
 import { IUser } from '@app/types/user';
-import { User } from '@firebase/auth';
 import { createSlice } from '@reduxjs/toolkit';
 
 export interface AuthState {

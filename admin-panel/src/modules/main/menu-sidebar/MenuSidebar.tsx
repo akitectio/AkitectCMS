@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
+import { SidebarSearch } from '@app/components/sidebar-search/SidebarSearch';
+import { envConfig } from '@app/configs/loadEnv';
+import { useAppSelector } from '@app/store/store';
+import i18n from '@app/utils/i18n';
 import { MenuItem } from '@components';
 import { Image } from '@profabric/react-components';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { SidebarSearch } from '@app/components/sidebar-search/SidebarSearch';
-import i18n from '@app/utils/i18n';
-import { useAppSelector } from '@app/store/store';
 
 export interface IMenuItem {
   name: string;
@@ -72,7 +73,7 @@ const MenuSidebar = () => {
           height={33}
           rounded
         />
-        <span className="brand-text font-weight-light">AdminLTE 3</span>
+        <span className="brand-text font-weight-light">{envConfig.siteName}</span>
       </Link>
       <div className="sidebar">
         <div className="user-panel mt-3 pb-3 mb-3 d-flex">

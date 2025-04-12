@@ -1,28 +1,24 @@
-import { useEffect, useState } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import Main from '@modules/main/Main';
-import Login from '@modules/login/Login';
-import Register from '@modules/register/Register';
-import ForgetPassword from '@modules/forgot-password/ForgotPassword';
-import RecoverPassword from '@modules/recover-password/RecoverPassword';
 import { useWindowSize } from '@app/hooks/useWindowSize';
-import { calculateWindowSize } from '@app/utils/helpers';
 import { setWindowSize } from '@app/store/reducers/ui';
+import { calculateWindowSize } from '@app/utils/helpers';
+import ForgetPassword from '@modules/forgot-password/ForgotPassword';
+import Login from '@modules/login/Login';
+import Main from '@modules/main/Main';
+import RecoverPassword from '@modules/recover-password/RecoverPassword';
+import { useEffect, useState } from 'react';
 import ReactGA from 'react-ga4';
+import { Route, Routes, useLocation } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 
-import Dashboard from '@pages/Dashboard';
 import Blank from '@pages/Blank';
+import Dashboard from '@pages/Dashboard';
 import SubMenu from '@pages/SubMenu';
 import Profile from '@pages/profile/Profile';
 
-import PublicRoute from './routes/PublicRoute';
 import PrivateRoute from './routes/PrivateRoute';
-import { setCurrentUser } from './store/reducers/auth';
+import PublicRoute from './routes/PublicRoute';
 
-import { firebaseAuth } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { useAppDispatch, useAppSelector } from './store/store';
+import { useAppDispatch, useAppSelector } from '@store/store';
 import { Loading } from './components/Loading';
 
 const { VITE_NODE_ENV } = import.meta.env;
@@ -33,26 +29,8 @@ const App = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
 
-  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [isAppLoading, setIsAppLoading] = useState(false);
 
-  useEffect(() => {
-    onAuthStateChanged(
-      firebaseAuth,
-      (user) => {
-        if (user) {
-          dispatch(setCurrentUser(user));
-        } else {
-          dispatch(setCurrentUser(null));
-        }
-        setIsAppLoading(false);
-      },
-      (e) => {
-        console.log(e);
-        dispatch(setCurrentUser(null));
-        setIsAppLoading(false);
-      }
-    );
-  }, []);
 
   useEffect(() => {
     const size = calculateWindowSize(windowSize.width);
@@ -81,7 +59,6 @@ const App = () => {
           <Route path="/login" element={<Login />} />
         </Route>
         <Route path="/register" element={<PublicRoute />}>
-          <Route path="/register" element={<Register />} />
         </Route>
         <Route path="/forgot-password" element={<PublicRoute />}>
           <Route path="/forgot-password" element={<ForgetPassword />} />

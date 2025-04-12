@@ -1,31 +1,28 @@
+import { setWindowClass } from '@app/utils/helpers';
+import { setCurrentUser } from '@store/reducers/auth';
+import { useFormik } from 'formik';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { useFormik } from 'formik';
-import { useTranslation } from 'react-i18next';
-import { setCurrentUser } from '@store/reducers/auth';
-import { setWindowClass } from '@app/utils/helpers';
-import { Checkbox } from '@profabric/react-components';
 import * as Yup from 'yup';
 
-import { Form, InputGroup } from 'react-bootstrap';
-import { Button } from '@app/styles/common';
-import { loginWithEmail, signInByGoogle } from '@app/services/auth';
+import { envConfig } from '@app/configs/loadEnv';
+import { loginByAuth } from '@app/services/auth';
 import { useAppDispatch } from '@app/store/store';
-
+import { Button } from '@app/styles/common';
+import { Form, InputGroup } from 'react-bootstrap';
 const Login = () => {
   const [isAuthLoading, setAuthLoading] = useState(false);
-  const [isGoogleAuthLoading, setGoogleAuthLoading] = useState(false);
-  const [isFacebookAuthLoading, setFacebookAuthLoading] = useState(false);
   const dispatch = useAppDispatch();
 
   const navigate = useNavigate();
   const [t] = useTranslation();
 
-  const login = async (email: string, password: string) => {
+  const login = async (username: string, password: string) => {
     try {
       setAuthLoading(true);
-      const { user } = await loginWithEmail(email, password);
+      const { user } = await loginByAuth(username, password);
       dispatch(setCurrentUser(user));
       toast.success('Login is succeed!');
       setAuthLoading(false);
@@ -36,42 +33,23 @@ const Login = () => {
     }
   };
 
-  const loginByGoogle = async () => {
-    try {
-      setGoogleAuthLoading(true);
-      await signInByGoogle();
-      toast.success('Login is succeed!');
-      setGoogleAuthLoading(false);
-    } catch (error: any) {
-      setGoogleAuthLoading(false);
-      toast.error(error.message || 'Failed');
-    }
-  };
 
-  const loginByFacebook = async () => {
-    try {
-      setFacebookAuthLoading(true);
-      throw new Error('Not implemented');
-    } catch (error: any) {
-      setFacebookAuthLoading(false);
-      toast.error(error.message || 'Failed');
-    }
-  };
+
 
   const { handleChange, values, handleSubmit, touched, errors } = useFormik({
     initialValues: {
-      email: '',
+      username: '',
       password: '',
     },
     validationSchema: Yup.object({
-      email: Yup.string().email('Invalid email address').required('Required'),
+      username: Yup.string().required('Required'),
       password: Yup.string()
         .min(5, 'Must be 5 characters or more')
         .max(30, 'Must be 30 characters or less')
         .required('Required'),
     }),
     onSubmit: (values) => {
-      login(values.email, values.password);
+      login(values.username, values.password);
     },
   });
 
@@ -82,8 +60,7 @@ const Login = () => {
       <div className="card card-outline card-primary">
         <div className="card-header text-center">
           <Link to="/" className="h1">
-            <b>Admin</b>
-            <span>LTE</span>
+            {envConfig.siteName}
           </Link>
         </div>
         <div className="card-body">
@@ -92,23 +69,23 @@ const Login = () => {
             <div className="mb-3">
               <InputGroup className="mb-3">
                 <Form.Control
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Email"
+                  id="username"
+                  name="username"
+                  type="username"
+                  placeholder="Username"
                   onChange={handleChange}
-                  value={values.email}
-                  isValid={touched.email && !errors.email}
-                  isInvalid={touched.email && !!errors.email}
+                  value={values.username}
+                  isValid={touched.username && !errors.username}
+                  isInvalid={touched.username && !!errors.username}
                 />
-                {touched.email && errors.email ? (
+                {touched.username && errors.username ? (
                   <Form.Control.Feedback type="invalid">
-                    {errors.email}
+                    {errors.username}
                   </Form.Control.Feedback>
                 ) : (
                   <InputGroup.Append>
                     <InputGroup.Text>
-                      <i className="fas fa-envelope" />
+                      <i className="fas fa-id-card" />
                     </InputGroup.Text>
                   </InputGroup.Append>
                 )}
@@ -141,18 +118,10 @@ const Login = () => {
             </div>
 
             <div className="row">
-              <div className="col-8">
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Checkbox checked={false} />
-                  <label style={{ margin: 0, padding: 0, paddingLeft: '4px' }}>
-                    {t('login.label.rememberMe')}
-                  </label>
-                </div>
-              </div>
-              <div className="col-4">
+              <div className="col-12">
                 <Button
                   loading={isAuthLoading}
-                  disabled={isFacebookAuthLoading || isGoogleAuthLoading}
+                  disabled={isAuthLoading}
                   onClick={handleSubmit as any}
                 >
                   {t('login.button.signIn.label')}
@@ -160,36 +129,7 @@ const Login = () => {
               </div>
             </div>
           </form>
-          <div className="social-auth-links text-center mt-2 mb-3">
-            <Button
-              className="mb-2"
-              onClick={loginByFacebook}
-              loading={isFacebookAuthLoading}
-              disabled={true || isAuthLoading || isGoogleAuthLoading}
-            >
-              <i className="fab fa-facebook mr-2" />
-              {t('login.button.signIn.social', {
-                what: 'Facebook',
-              })}
-            </Button>
-            <Button
-              variant="danger"
-              onClick={loginByGoogle}
-              loading={isGoogleAuthLoading}
-              disabled={isAuthLoading || isFacebookAuthLoading}
-            >
-              <i className="fab fa-google mr-2" />
-              {t('login.button.signIn.social', { what: 'Google' })}
-            </Button>
-          </div>
-          <p className="mb-1">
-            <Link to="/forgot-password">{t('login.label.forgotPass')}</Link>
-          </p>
-          <p className="mb-0">
-            <Link to="/register" className="text-center">
-              {t('login.label.registerNew')}
-            </Link>
-          </p>
+    
         </div>
       </div>
     </div>

@@ -1,11 +1,12 @@
-import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { envConfig } from '@app/configs/loadEnv';
+import { Button } from '@app/styles/common';
 import { setWindowClass } from '@app/utils/helpers';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import { Form, InputGroup } from 'react-bootstrap';
-import { Button } from '@app/styles/common';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import * as Yup from 'yup';
 
 const RecoverPassword = () => {
   const [t] = useTranslation();
@@ -37,8 +38,7 @@ const RecoverPassword = () => {
       <div className="card card-outline card-primary">
         <div className="card-header text-center">
           <Link to="/" className="h1">
-            <b>Admin</b>
-            <span>LTE</span>
+            {envConfig.siteName}
           </Link>
         </div>
         <div className="card-body">

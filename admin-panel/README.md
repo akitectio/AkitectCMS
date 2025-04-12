@@ -29,13 +29,9 @@ Online demo: https://erdkse.com/projects/preview/adminlte-react
 
 To login website you can `create` a user. All authenication related features are `working` and `live`!
 
-`Firebase` is added as backend provider to increase better user experince.
-
 ## Development
 
 First, install the dependencies with `npm install` command.
-
-You need to run `npm run firebase:start` on a different terminal and keep it running.
 
 Then, in the project directory, you can run: `npm run dev`
 
@@ -49,6 +45,6 @@ Released 2021 by [Erdi Köse](https://erdkse.com)
 
 ## Support for more
 
-If you liked my work and would like to support for my expenses like server costs, please; (ie. `Firebase`)
+If you liked my work and would like to support for my expenses like server costs, please;
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/erdkse)

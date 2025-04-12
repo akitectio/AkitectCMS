@@ -1,11 +1,11 @@
-import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next';
 import { setWindowClass } from '@app/utils/helpers';
-import * as Yup from 'yup';
+import { Button } from '@profabric/react-components';
 import { useFormik } from 'formik';
 import { Form, InputGroup } from 'react-bootstrap';
-import { Button } from '@profabric/react-components';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import * as Yup from 'yup';
 
 const ForgotPassword = () => {
   const [t] = useTranslation();
@@ -30,8 +30,7 @@ const ForgotPassword = () => {
       <div className="card card-outline card-primary">
         <div className="card-header text-center">
           <Link to="/" className="h1">
-            <b>Admin</b>
-            <span>LTE</span>
+            
           </Link>
         </div>
         <div className="card-body">
