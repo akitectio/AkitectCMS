@@ -5,6 +5,9 @@
  *   License: Open source - MIT <https://opensource.org/licenses/MIT>
  */
 
+// Import Sass math module to fix abs() function deprecation warning
+@use "sass:math" as math;
+
 // Bootstrap
 // ---------------------------------------------------
 @import "../node_modules/bootstrap/scss/functions";

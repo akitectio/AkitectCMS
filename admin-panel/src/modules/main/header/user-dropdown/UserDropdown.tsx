@@ -1,4 +1,5 @@
 import { } from '@app/index';
+import { logoutUser } from '@app/services/auth';
 import { useAppSelector } from '@app/store/store';
 import { StyledBigUserImage, StyledSmallUserImage } from '@app/styles/common';
 import {
@@ -21,6 +22,8 @@ const UserDropdown = () => {
   const logOut = async (event: any) => {
     event.preventDefault();
     setDropdownOpen(false);
+    // Call the logout function from auth service
+    logoutUser();
   };
 
   const navigateToProfile = (event: any) => {

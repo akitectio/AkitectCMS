@@ -1,0 +1,24 @@
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      PGDATA: /data/postgres
+    volumes:
+       - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: always
+  redis:
+    container_name: redis_container
+    image: redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-123456}
+    ports:
+      - "6379:6379"
+    restart: always
+
+volumes:
+    postgres:
+    pgadmin:

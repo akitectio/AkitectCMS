@@ -1,23 +1,31 @@
-package io.akitect.cms.controller;
+package io.akitect.cms.controller.admin;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import io.akitect.cms.dto.JwtResponse;
 import io.akitect.cms.dto.LoginDTO;
 import io.akitect.cms.dto.MessageResponse;
 import io.akitect.cms.dto.RegisterDTO;
 import io.akitect.cms.service.AuthService;
+import io.akitect.cms.util.Constants;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/admin/auth")
-public class AuthController {
+@RequestMapping(Constants.ADMIN_BASE_PATH + "/auth") // Use centralized constant for base path
+public class AuthController extends AdminBaseController {
 
     @Autowired
     private AuthService authService;

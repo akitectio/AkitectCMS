@@ -1,18 +1,30 @@
 import { Action, ThunkAction, configureStore } from '@reduxjs/toolkit';
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import { createLogger } from 'redux-logger';
+import createSagaMiddleware from 'redux-saga';
 
 import { authSlice } from '@app/store/reducers/auth';
+import { permissionsSlice } from '@app/store/reducers/permissions';
 import { uiSlice } from '@app/store/reducers/ui';
-import { createLogger } from 'redux-logger';
-import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import rootSaga from './sagas';
+
+// Create saga middleware
+const sagaMiddleware = createSagaMiddleware();
 
 const store = configureStore({
   reducer: {
     auth: authSlice.reducer,
     ui: uiSlice.reducer,
+    permissions: permissionsSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({ serializableCheck: false }).concat(createLogger()),
+    getDefaultMiddleware({ serializableCheck: false })
+      .concat(createLogger())
+      .concat(sagaMiddleware),
 });
+
+// Run saga
+sagaMiddleware.run(rootSaga);
 
 export default store;
 

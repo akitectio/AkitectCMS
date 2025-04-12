@@ -1,42 +1,45 @@
 import { setWindowClass } from '@app/utils/helpers';
-import { setCurrentUser } from '@store/reducers/auth';
+import { loginRequest } from '@store/reducers/auth';
 import { useFormik } from 'formik';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import * as Yup from 'yup';
 
 import { envConfig } from '@app/configs/loadEnv';
-import { loginByAuth } from '@app/services/auth';
-import { useAppDispatch } from '@app/store/store';
+import { useAppDispatch, useAppSelector } from '@app/store/store';
 import { Button } from '@app/styles/common';
 import { Form, InputGroup } from 'react-bootstrap';
-const Login = () => {
-  const [isAuthLoading, setAuthLoading] = useState(false);
-  const dispatch = useAppDispatch();
 
+const Login = () => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [t] = useTranslation();
+  
+  // Get auth state from Redux store
+  const { loading: isAuthLoading, currentUser, formValues } = useAppSelector(state => state.auth);
 
-  const login = async (username: string, password: string) => {
-    try {
-      setAuthLoading(true);
-      const { user } = await loginByAuth(username, password);
-      dispatch(setCurrentUser(user));
-      toast.success('Login is succeed!');
-      setAuthLoading(false);
-      navigate('/');
-    } catch (error: any) {
-      setAuthLoading(false);
-      toast.error(error.message || 'Failed');
+  // Check for token and redirect to dashboard if it exists
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/dashboard');
     }
+  }, [navigate]);
+
+  // Navigate to homepage if user is authenticated
+  useEffect(() => {
+    if (currentUser) {
+      navigate('/');
+    }
+  }, [currentUser, navigate]);
+
+  const login = (username: string, password: string) => {
+    // Dispatch login action to trigger the saga
+    dispatch(loginRequest({ username, password }));
   };
 
-
-
-
-  const { handleChange, values, handleSubmit, touched, errors } = useFormik({
+  const { handleChange, values, handleSubmit, touched, errors, setValues } = useFormik({
     initialValues: {
       username: '',
       password: '',
@@ -53,6 +56,14 @@ const Login = () => {
     },
   });
 
+  // Update form values when Redux store changes
+  useEffect(() => {
+    setValues({
+      username: formValues?.username || '',
+      password: formValues?.password || '',
+    });
+  }, [formValues, setValues]);
+
   setWindowClass('hold-transition login-page');
 
   return (
@@ -65,6 +76,7 @@ const Login = () => {
         </div>
         <div className="card-body">
           <p className="login-box-msg">{t('login.label.signIn')}</p>
+          
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <InputGroup className="mb-3">

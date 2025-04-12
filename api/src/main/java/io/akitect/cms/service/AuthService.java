@@ -1,5 +1,22 @@
 package io.akitect.cms.service;
 
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import io.akitect.cms.dto.JwtResponse;
 import io.akitect.cms.dto.LoginDTO;
 import io.akitect.cms.dto.MessageResponse;
@@ -14,19 +31,6 @@ import io.akitect.cms.security.JwtUtils;
 import io.akitect.cms.security.UserDetailsImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -51,42 +55,65 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
 
     public JwtResponse login(LoginDTO loginDTO, HttpServletRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword()));
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword()));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(item -> item.getAuthority())
-                .collect(Collectors.toList());
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        // Update last login
-        User user = userRepository.findById(userDetails.getId()).orElseThrow(() ->
-                new RuntimeException("User not found"));
-        user.setLastLogin(LocalDateTime.now());
-        userRepository.save(user);
+            // Get user and check if active
+            User user = userRepository.findById(userDetails.getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Log activity
-        ActivityLog activityLog = new ActivityLog();
-        activityLog.setUser(user);
-        activityLog.setAction("LOGIN");
-        activityLog.setIpAddress(getClientIp(request));
-        activityLog.setUserAgent(request.getHeader("User-Agent"));
-        activityLog.setCreatedAt(LocalDateTime.now());
-        activityLogRepository.save(activityLog);
+            // Check if user is active
+            if (!user.isActive()) {
+                log.warn("Login attempt for inactive account: {}", loginDTO.getUsername());
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is not active");
+            }
 
-        return new JwtResponse(
-                jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail(),
-                userDetails.getFullName(),
-                userDetails.getAvatarUrl(),
-                userDetails.isSuperAdmin(),
-                roles
-        );
+            // Generate JWT token
+            String jwt = jwtUtils.generateJwtToken(authentication);
+
+            // Update last login
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+
+            // Log activity
+            ActivityLog activityLog = new ActivityLog();
+            activityLog.setUser(user);
+            activityLog.setAction("LOGIN");
+            activityLog.setIpAddress(getClientIp(request));
+            activityLog.setUserAgent(request.getHeader("User-Agent"));
+            activityLog.setCreatedAt(LocalDateTime.now());
+            activityLogRepository.save(activityLog);
+
+            // Get user roles
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(item -> item.getAuthority())
+                    .collect(Collectors.toList());
+
+            // Return JwtResponse with user details
+            return new JwtResponse(
+                    jwt,
+                    userDetails.getId(),
+                    userDetails.getUsername(),
+                    userDetails.getEmail(),
+                    user.getFullName(),
+                    user.getAvatarUrl(),
+                    user.isSuperAdmin(),
+                    roles);
+        } catch (BadCredentialsException e) {
+            log.error("Invalid username or password", e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
+        } catch (ResponseStatusException e) {
+            log.error("Login failed: {}", e.getReason(), e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during login", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", e);
+        }
     }
 
     public MessageResponse register(RegisterDTO registerDTO, HttpServletRequest request) {

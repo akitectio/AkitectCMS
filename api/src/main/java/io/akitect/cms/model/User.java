@@ -1,13 +1,22 @@
 package io.akitect.cms.model;
 
-import io.akitect.cms.model.base.BaseEntity;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+
+import io.akitect.cms.model.base.BaseEntity;
+import io.akitect.cms.util.enums.UserStatusEnum;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "users")
@@ -34,7 +43,7 @@ public class User extends BaseEntity {
     private String bio;
 
     @Column(name = "status", length = 20, nullable = false)
-    private String status = "ACTIVE";
+    private String status = UserStatusEnum.ACTIVE.getValue();
 
     @Column(name = "reset_token", length = 255)
     private String resetToken;
@@ -52,11 +61,7 @@ public class User extends BaseEntity {
     private boolean superAdmin = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
@@ -70,4 +75,8 @@ public class User extends BaseEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<Comment> comments = new HashSet<>();
+
+    public boolean isActive() {
+        return UserStatusEnum.ACTIVE.getValue().equals(this.status);
+    }
 }

@@ -12,12 +12,15 @@ import { ToastContainer } from 'react-toastify';
 
 import Blank from '@pages/Blank';
 import Dashboard from '@pages/Dashboard';
+import Permissions from '@pages/Permissions';
 import SubMenu from '@pages/SubMenu';
 import Profile from '@pages/profile/Profile';
 
 import PrivateRoute from './routes/PrivateRoute';
 import PublicRoute from './routes/PublicRoute';
 
+import { getCurrentUser } from '@app/services/auth';
+import { setCurrentUser } from '@store/reducers/auth';
 import { useAppDispatch, useAppSelector } from '@store/store';
 import { Loading } from './components/Loading';
 
@@ -29,8 +32,34 @@ const App = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
 
-  const [isAppLoading, setIsAppLoading] = useState(false);
+  const [isAppLoading, setIsAppLoading] = useState(true);
 
+  // Initialize user from localStorage token
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        
+        if (token) {
+          // If token exists, try to get the current user
+          const user = await getCurrentUser();
+          if (user) {
+            // Update Redux store with user data
+            dispatch(setCurrentUser(user));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to initialize user:', error);
+        // If there's an error (like invalid token), clear the token
+        localStorage.removeItem('token');
+      } finally {
+        // Either way, we're done loading
+        setIsAppLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, [dispatch]);
 
   useEffect(() => {
     const size = calculateWindowSize(windowSize.width);
@@ -71,7 +100,9 @@ const App = () => {
             <Route path="/sub-menu-2" element={<Blank />} />
             <Route path="/sub-menu-1" element={<SubMenu />} />
             <Route path="/blank" element={<Blank />} />
+            <Route path="/permissions" element={<Permissions />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/" element={<Dashboard />} />
           </Route>
         </Route>

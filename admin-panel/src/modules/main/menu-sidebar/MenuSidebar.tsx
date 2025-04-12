@@ -21,6 +21,11 @@ export const MENU: IMenuItem[] = [
     path: '/',
   },
   {
+    name: 'Permissions',
+    icon: 'fas fa-lock nav-icon',
+    path: '/permissions',
+  },
+  {
     name: i18n.t('menusidebar.label.blank'),
     icon: 'fas fa-wrench nav-icon',
     path: '/blank',
