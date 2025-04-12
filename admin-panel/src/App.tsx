@@ -13,6 +13,9 @@ import { ToastContainer } from 'react-toastify';
 import Blank from '@pages/Blank';
 import Dashboard from '@pages/Dashboard';
 import Permissions from '@pages/Permissions';
+import RoleCreate from '@pages/RoleCreate';
+import RoleEdit from '@pages/RoleEdit';
+import Roles from '@pages/Roles';
 import SubMenu from '@pages/SubMenu';
 import Profile from '@pages/profile/Profile';
 
@@ -101,6 +104,9 @@ const App = () => {
             <Route path="/sub-menu-1" element={<SubMenu />} />
             <Route path="/blank" element={<Blank />} />
             <Route path="/permissions" element={<Permissions />} />
+            <Route path="/roles" element={<Roles />} />
+            <Route path="/roles/create" element={<RoleCreate />} />
+            <Route path="/roles/:id/edit" element={<RoleEdit />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/" element={<Dashboard />} />

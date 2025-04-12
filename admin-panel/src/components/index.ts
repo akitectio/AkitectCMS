@@ -1,5 +1,7 @@
 import ContentHeader from './content-header/ContentHeader';
-import SmallBox from './small-box/SmallBox';
+import DataTable from './DataTable';
 import MenuItem from './menu-item/MenuItem';
+import SmallBox from './small-box/SmallBox';
 
-export { ContentHeader, SmallBox, MenuItem };
+export { ContentHeader, DataTable, MenuItem, SmallBox };
+

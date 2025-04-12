@@ -21,9 +21,20 @@ export const MENU: IMenuItem[] = [
     path: '/',
   },
   {
-    name: 'Permissions',
-    icon: 'fas fa-lock nav-icon',
-    path: '/permissions',
+    name: 'Access Control',
+    icon: 'fas fa-shield-alt nav-icon',
+    children: [
+      {
+        name: 'Roles',
+        icon: 'fas fa-shield-halved nav-icon',
+        path: '/roles',
+      },
+      {
+        name: 'Permissions',
+        icon: 'fas fa-lock nav-icon',
+        path: '/permissions',
+      },
+    ],
   },
   {
     name: i18n.t('menusidebar.label.blank'),

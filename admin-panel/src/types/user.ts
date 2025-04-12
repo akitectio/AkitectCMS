@@ -17,7 +17,7 @@ export interface User {
 export type IUser = User;
 
 export interface Permission {
-  id: number;
+  id: string;  // Changed from number to string to match UUID format
   name: string;
   description: string;
   createdAt: string;
@@ -32,4 +32,25 @@ export interface PermissionCreateRequest {
 export interface PermissionUpdateRequest {
   name?: string;
   description?: string;
+}
+
+export interface Role {
+  id: string;  // Changed from number to string to match UUID format
+  name: string;
+  description: string;
+  permissionIds?: string[];  // Changed from permissions to permissionIds to match API response
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RoleCreateRequest {
+  name: string;
+  description: string;
+  permissionIds?: string[];  // Changed from permissions to permissionIds and from number[] to string[]
+}
+
+export interface RoleUpdateRequest {
+  name?: string;
+  description?: string;
+  permissionIds?: string[];  // Changed from permissions to permissionIds and from number[] to string[]
 }

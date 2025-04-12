@@ -12,6 +12,7 @@ const API_PATHS = {
   MEDIA: '/media',
   SETTINGS: '/settings',
   PERMISSIONS: '/permissions',
+  ROLES: '/roles',
 };
 
 // Auth endpoints
@@ -44,6 +45,19 @@ export const PERMISSION_ENDPOINTS = {
   CREATE: API_PATHS.PERMISSIONS,
   UPDATE: (id: string | number) => `${API_PATHS.PERMISSIONS}/${id}`,
   DELETE: (id: string | number) => `${API_PATHS.PERMISSIONS}/${id}`,
+  SEARCH: `${API_PATHS.PERMISSIONS}?search=:query&page=:page&size=:size&sortBy=:sortBy&direction=:direction`,
+};
+
+// Role endpoints
+export const ROLE_ENDPOINTS = {
+  GET_ALL: API_PATHS.ROLES,
+  GET_BY_ID: (id: string | number) => `${API_PATHS.ROLES}/${id}`,
+  CREATE: API_PATHS.ROLES,
+  UPDATE: (id: string | number) => `${API_PATHS.ROLES}/${id}`,
+  DELETE: (id: string | number) => `${API_PATHS.ROLES}/${id}`,
+  ADD_PERMISSIONS: (id: string | number) => `${API_PATHS.ROLES}/${id}/permissions`,
+  REMOVE_PERMISSIONS: (id: string | number) => `${API_PATHS.ROLES}/${id}/permissions`,
+  SEARCH: `${API_PATHS.ROLES}?search=:query&page=:page&size=:size&sortBy=:sortBy&direction=:direction`,
 };
 
 // Post endpoints

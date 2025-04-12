@@ -136,6 +136,22 @@ public class GlobalExceptionHandler {
             return new ResponseEntity<>(errorDetails, responseStatusException.getStatusCode());
         }
 
+        // Kiểm tra lỗi Access Denied để trả về 403 (Forbidden)
+        if (ex.getMessage() != null &&
+                (ex.getMessage().contains("Access Denied") ||
+                        ex.getMessage().contains("access denied") ||
+                        ex.getMessage().contains("not authorized") ||
+                        ex.getCause() instanceof org.springframework.security.access.AccessDeniedException)) {
+
+            ErrorDetails errorDetails = new ErrorDetails(
+                    LocalDateTime.now(),
+                    "Access Denied: You don't have permission to access this resource",
+                    request.getDescription(false),
+                    "FORBIDDEN");
+
+            return new ResponseEntity<>(errorDetails, HttpStatus.FORBIDDEN);
+        }
+
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 ex.getMessage(),

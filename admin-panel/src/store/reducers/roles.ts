@@ -1,9 +1,9 @@
-import { Permission } from '@app/types/user';
+import { Role } from '@app/types/user';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface PermissionsState {
-  items: Permission[];
-  selectedPermission: Permission | null;
+export interface RolesState {
+  items: Role[];
+  selectedRole: Role | null;
   loading: boolean;
   creating: boolean;
   updating: boolean;
@@ -15,9 +15,9 @@ export interface PermissionsState {
   totalPages: number;
 }
 
-const initialState: PermissionsState = {
+const initialState: RolesState = {
   items: [],
-  selectedPermission: null,
+  selectedRole: null,
   loading: false,
   creating: false,
   updating: false,
@@ -29,13 +29,13 @@ const initialState: PermissionsState = {
   totalPages: 0
 };
 
-export const permissionsSlice = createSlice({
-  name: 'permissions',
+export const rolesSlice = createSlice({
+  name: 'roles',
   initialState,
   reducers: {
-    // Get permissions (list)
-    fetchPermissionsRequest: (
-      state: PermissionsState,
+    // Get roles (list)
+    fetchRolesRequest: (
+      state: RolesState,
       action: PayloadAction<{
         page?: number;
         size?: number;
@@ -47,77 +47,76 @@ export const permissionsSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
-    fetchPermissionsSuccess: (
-      state: PermissionsState,
+    fetchRolesSuccess: (
+      state: RolesState,
       action: PayloadAction<{
-        permissions: Permission[];
+        roles: Role[];
         currentPage: number;
         totalItems: number;
         totalPages: number;
       }>
     ) => {
       state.loading = false;
-      state.items = action.payload.permissions;
+      state.items = action.payload.roles;
       state.currentPage = action.payload.currentPage;
       state.total = action.payload.totalItems;
       state.totalPages = action.payload.totalPages;
     },
-    fetchPermissionsFailure: (
-      state: PermissionsState,
+    fetchRolesFailure: (
+      state: RolesState,
       action: PayloadAction<string>
     ) => {
       state.loading = false;
       state.error = action.payload;
     },
 
-    // Get a single permission
-    fetchPermissionRequest: (
-      state: PermissionsState,
-      action: PayloadAction<{ id: number | string }>
+    // Get a single role
+    fetchRoleRequest: (
+      state: RolesState,
+      action: PayloadAction<string>
     ) => {
       state.loading = true;
       state.error = null;
-      state.selectedPermission = null;
+      state.selectedRole = null;
     },
-    fetchPermissionSuccess: (
-      state: PermissionsState,
-      action: PayloadAction<Permission>
+    fetchRoleSuccess: (
+      state: RolesState,
+      action: PayloadAction<Role>
     ) => {
       state.loading = false;
-      state.selectedPermission = action.payload;
+      state.selectedRole = action.payload;
     },
-    fetchPermissionFailure: (
-      state: PermissionsState,
+    fetchRoleFailure: (
+      state: RolesState,
       action: PayloadAction<string>
     ) => {
       state.loading = false;
       state.error = action.payload;
     },
 
-    // Create a permission
-    createPermissionRequest: (
-      state: PermissionsState,
+    // Create a role
+    createRoleRequest: (
+      state: RolesState,
       action: PayloadAction<{
         name: string;
         description: string;
-        module: string;
-        key: string;
+        permissionIds: string[];
       }>
     ) => {
       state.creating = true;
       state.error = null;
       state.success = false;
     },
-    createPermissionSuccess: (
-      state: PermissionsState,
-      action: PayloadAction<Permission>
+    createRoleSuccess: (
+      state: RolesState,
+      action: PayloadAction<Role>
     ) => {
       state.creating = false;
       state.success = true;
       state.items = [...state.items, action.payload];
     },
-    createPermissionFailure: (
-      state: PermissionsState,
+    createRoleFailure: (
+      state: RolesState,
       action: PayloadAction<string>
     ) => {
       state.creating = false;
@@ -125,36 +124,35 @@ export const permissionsSlice = createSlice({
       state.success = false;
     },
 
-    // Update a permission
-    updatePermissionRequest: (
-      state: PermissionsState,
+    // Update a role
+    updateRoleRequest: (
+      state: RolesState,
       action: PayloadAction<{
-        id: number | string;
+        id: string;
         name: string;
         description: string;
-        module: string;
-        key: string;
+        permissionIds: string[];
       }>
     ) => {
       state.updating = true;
       state.error = null;
       state.success = false;
     },
-    updatePermissionSuccess: (
-      state: PermissionsState,
-      action: PayloadAction<Permission>
+    updateRoleSuccess: (
+      state: RolesState,
+      action: PayloadAction<Role>
     ) => {
       state.updating = false;
       state.success = true;
       state.items = state.items.map((item) =>
         item.id === action.payload.id ? action.payload : item
       );
-      if (state.selectedPermission && state.selectedPermission.id === action.payload.id) {
-        state.selectedPermission = action.payload;
+      if (state.selectedRole && state.selectedRole.id === action.payload.id) {
+        state.selectedRole = action.payload;
       }
     },
-    updatePermissionFailure: (
-      state: PermissionsState,
+    updateRoleFailure: (
+      state: RolesState,
       action: PayloadAction<string>
     ) => {
       state.updating = false;
@@ -162,28 +160,28 @@ export const permissionsSlice = createSlice({
       state.success = false;
     },
 
-    // Delete a permission
-    deletePermissionRequest: (
-      state: PermissionsState,
-      action: PayloadAction<{ id: number | string }>
+    // Delete a role
+    deleteRoleRequest: (
+      state: RolesState,
+      action: PayloadAction<string>
     ) => {
       state.deleting = true;
       state.error = null;
       state.success = false;
     },
-    deletePermissionSuccess: (
-      state: PermissionsState,
-      action: PayloadAction<{ id: number | string }>
+    deleteRoleSuccess: (
+      state: RolesState,
+      action: PayloadAction<{ id: string }>
     ) => {
       state.deleting = false;
       state.success = true;
       state.items = state.items.filter((item) => item.id !== action.payload.id);
-      if (state.selectedPermission && state.selectedPermission.id === action.payload.id) {
-        state.selectedPermission = null;
+      if (state.selectedRole && state.selectedRole.id === action.payload.id) {
+        state.selectedRole = null;
       }
     },
-    deletePermissionFailure: (
-      state: PermissionsState,
+    deleteRoleFailure: (
+      state: RolesState,
       action: PayloadAction<string>
     ) => {
       state.deleting = false;
@@ -192,7 +190,7 @@ export const permissionsSlice = createSlice({
     },
 
     // Reset states
-    resetPermissionState: (state: PermissionsState) => {
+    resetRoleState: (state: RolesState) => {
       state.error = null;
       state.success = false;
     }
@@ -200,22 +198,22 @@ export const permissionsSlice = createSlice({
 });
 
 export const {
-  fetchPermissionsRequest,
-  fetchPermissionsSuccess,
-  fetchPermissionsFailure,
-  fetchPermissionRequest,
-  fetchPermissionSuccess,
-  fetchPermissionFailure,
-  createPermissionRequest,
-  createPermissionSuccess,
-  createPermissionFailure,
-  updatePermissionRequest,
-  updatePermissionSuccess,
-  updatePermissionFailure,
-  deletePermissionRequest,
-  deletePermissionSuccess,
-  deletePermissionFailure,
-  resetPermissionState
-} = permissionsSlice.actions;
+  fetchRolesRequest,
+  fetchRolesSuccess,
+  fetchRolesFailure,
+  fetchRoleRequest,
+  fetchRoleSuccess,
+  fetchRoleFailure,
+  createRoleRequest,
+  createRoleSuccess,
+  createRoleFailure,
+  updateRoleRequest,
+  updateRoleSuccess,
+  updateRoleFailure,
+  deleteRoleRequest,
+  deleteRoleSuccess,
+  deleteRoleFailure,
+  resetRoleState
+} = rolesSlice.actions;
 
-export default permissionsSlice.reducer;
+export default rolesSlice.reducer;

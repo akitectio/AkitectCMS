@@ -1,25 +1,22 @@
 import {
-    createPermissionRequest,
-    deletePermissionRequest,
-    fetchPermissionsRequest,
-    resetPermissionState,
-    updatePermissionRequest
+  createPermissionRequest,
+  deletePermissionRequest,
+  fetchPermissionsRequest,
+  resetPermissionState,
+  updatePermissionRequest
 } from '@app/store/reducers/permissions';
 import { useAppDispatch, useAppSelector } from '@app/store/store';
 import { Permission } from '@app/types/user';
-import { ContentHeader } from '@components';
+import { ContentHeader, DataTable } from '@components';
 import {
-    faEdit,
-    faLock,
-    faPlus,
-    faSort,
-    faSortDown,
-    faSortUp,
-    faTrash
+  faEdit,
+  faLock,
+  faPlus,
+  faTrash
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
-import { Button, Card, Form, Modal, Pagination, Table } from 'react-bootstrap';
+import { Button, Card, Form, Modal } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 
 const Permissions = () => {
@@ -48,17 +45,16 @@ const Permissions = () => {
   const [size, setSize] = useState(10);
   const [sortBy, setSortBy] = useState('name');
   const [direction, setDirection] = useState('asc');
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Form states
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
-  const [formModule, setFormModule] = useState('');
-  const [formKey, setFormKey] = useState('');
 
   // Load permissions when component mounts or when pagination/sorting changes
   useEffect(() => {
     fetchPermissions();
-  }, [page, size, sortBy, direction]);
+  }, [page, size, sortBy, direction, searchQuery]);
 
   // Reset form state after success
   useEffect(() => {
@@ -88,11 +84,28 @@ const Permissions = () => {
 
   // Fetch permissions
   const fetchPermissions = () => {
-    dispatch(fetchPermissionsRequest({ page, size, sortBy, direction }));
+    dispatch(fetchPermissionsRequest({ page, size, sortBy, direction, search: searchQuery }));
   };
 
-  // Handle sort column click
-  const handleSort = (column: string) => {
+  // Handle search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setPage(0); // Reset to first page when searching
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (newSize: number) => {
+    setSize(newSize);
+    setPage(0); // Reset to first page when changing items per page
+  };
+
+  // Handle sort change
+  const handleSortChange = (column: string) => {
     if (sortBy === column) {
       // Toggle direction
       setDirection(direction === 'asc' ? 'desc' : 'asc');
@@ -103,28 +116,11 @@ const Permissions = () => {
     }
   };
 
-  // Get sort icon for column
-  const getSortIcon = (column: string) => {
-    if (sortBy !== column) {
-      return <FontAwesomeIcon icon={faSort} className="text-muted ml-1" />;
-    }
-    return direction === 'asc' 
-      ? <FontAwesomeIcon icon={faSortUp} className="ml-1" /> 
-      : <FontAwesomeIcon icon={faSortDown} className="ml-1" />;
-  };
-
-  // Handle page change
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
   // Open create modal
   const handleOpenCreateModal = () => {
     // Reset form
     setFormName('');
     setFormDescription('');
-    setFormModule('');
-    setFormKey('');
     setShowCreateModal(true);
   };
 
@@ -133,8 +129,6 @@ const Permissions = () => {
     setSelectedPermission(permission);
     setFormName(permission.name);
     setFormDescription(permission.description);
-    setFormModule(permission.module);
-    setFormKey(permission.key);
     setShowEditModal(true);
   };
 
@@ -146,16 +140,14 @@ const Permissions = () => {
 
   // Handle create permission
   const handleCreatePermission = () => {
-    if (!formName || !formDescription || !formModule || !formKey) {
+    if (!formName || !formDescription) {
       toast.error('All fields are required');
       return;
     }
 
     dispatch(createPermissionRequest({
       name: formName,
-      description: formDescription,
-      module: formModule,
-      key: formKey
+      description: formDescription
     }));
   };
 
@@ -163,7 +155,7 @@ const Permissions = () => {
   const handleUpdatePermission = () => {
     if (!selectedPermission) return;
     
-    if (!formName || !formDescription || !formModule || !formKey) {
+    if (!formName || !formDescription) {
       toast.error('All fields are required');
       return;
     }
@@ -171,9 +163,7 @@ const Permissions = () => {
     dispatch(updatePermissionRequest({
       id: selectedPermission.id,
       name: formName,
-      description: formDescription,
-      module: formModule,
-      key: formKey
+      description: formDescription
     }));
   };
 
@@ -184,43 +174,46 @@ const Permissions = () => {
     dispatch(deletePermissionRequest({ id: selectedPermission.id }));
   };
 
-  // Render pagination controls
-  const renderPagination = () => {
-    const items = [];
-    
-    // Previous button
-    items.push(
-      <Pagination.Prev 
-        key="prev" 
-        onClick={() => handlePageChange(page - 1)} 
-        disabled={page === 0} 
-      />
-    );
-    
-    // Page numbers
-    for (let i = 0; i < totalPages; i++) {
-      items.push(
-        <Pagination.Item 
-          key={i} 
-          active={i === page} 
-          onClick={() => handlePageChange(i)}
-        >
-          {i + 1}
-        </Pagination.Item>
-      );
+  // Define columns for DataTable
+  const columns = [
+    {
+      key: 'id',
+      label: 'ID'
+    },
+    {
+      key: 'name',
+      label: 'Name'
+    },
+    {
+      key: 'description',
+      label: 'Description'
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (permission: Permission) => (
+        <>
+          <Button
+            variant="info"
+            size="sm"
+            className="mr-1"
+            onClick={() => handleOpenEditModal(permission)}
+            disabled={updating}
+          >
+            <FontAwesomeIcon icon={faEdit} />
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleOpenDeleteModal(permission)}
+            disabled={deleting}
+          >
+            <FontAwesomeIcon icon={faTrash} />
+          </Button>
+        </>
+      )
     }
-    
-    // Next button
-    items.push(
-      <Pagination.Next 
-        key="next" 
-        onClick={() => handlePageChange(page + 1)} 
-        disabled={page >= totalPages - 1} 
-      />
-    );
-    
-    return <Pagination className="justify-content-center mt-3">{items}</Pagination>;
-  };
+  ];
 
   return (
     <div>
@@ -249,78 +242,20 @@ const Permissions = () => {
                   </div>
                 </Card.Header>
                 <Card.Body>
-                  {loading ? (
-                    <div className="text-center py-5">
-                      <div className="spinner-border text-primary" role="status">
-                        <span className="sr-only">Loading...</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <Table striped bordered hover responsive>
-                        <thead>
-                          <tr>
-                            <th onClick={() => handleSort('id')} style={{ cursor: 'pointer' }}>
-                              ID {getSortIcon('id')}
-                            </th>
-                            <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-                              Name {getSortIcon('name')}
-                            </th>
-                            <th onClick={() => handleSort('description')} style={{ cursor: 'pointer' }}>
-                              Description {getSortIcon('description')}
-                            </th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {permissions.length > 0 ? (
-                            permissions.map((permission) => (
-                              <tr key={permission.id}>
-                                <td>{permission.id}</td>
-                                <td>{permission.name}</td>
-                                <td>{permission.description}</td>
-                                <td>
-                                  <Button
-                                    variant="info"
-                                    size="sm"
-                                    className="mr-1"
-                                    onClick={() => handleOpenEditModal(permission)}
-                                    disabled={updating}
-                                  >
-                                    <FontAwesomeIcon icon={faEdit} />
-                                  </Button>
-                                  <Button
-                                    variant="danger"
-                                    size="sm"
-                                    onClick={() => handleOpenDeleteModal(permission)}
-                                    disabled={deleting}
-                                  >
-                                    <FontAwesomeIcon icon={faTrash} />
-                                  </Button>
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={6} className="text-center">
-                                No permissions found
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </Table>
-                      
-                      {/* Pagination */}
-                      {totalPages > 1 && renderPagination()}
-                      
-                      {/* Total items info */}
-                      <div className="text-center mt-3">
-                        <small className="text-muted">
-                          Showing {permissions.length} of {total} permissions
-                        </small>
-                      </div>
-                    </>
-                  )}
+                  <DataTable
+                    data={permissions || []}
+                    columns={columns}
+                    loading={loading}
+                    isServerSide={true}
+                    currentPage={page}
+                    defaultItemsPerPage={size}
+                    totalItems={total}
+                    onSearch={handleSearch}
+                    onPageChange={handlePageChange}
+                    onItemsPerPageChange={handleItemsPerPageChange}
+                    searchPlaceholder="Search permissions..."
+                    emptyMessage="No permissions found"
+                  />
                 </Card.Body>
               </Card>
             </div>
@@ -399,27 +334,6 @@ const Permissions = () => {
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
               />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Module</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Enter module name (e.g., users, posts, etc.)"
-                value={formModule}
-                onChange={(e) => setFormModule(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Key</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Enter permission key (e.g., users.create)"
-                value={formKey}
-                onChange={(e) => setFormKey(e.target.value)}
-              />
-              <Form.Text className="text-muted">
-                This should be a unique identifier for the permission
-              </Form.Text>
             </Form.Group>
           </Form>
         </Modal.Body>

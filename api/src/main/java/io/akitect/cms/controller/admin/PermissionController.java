@@ -60,21 +60,24 @@ public class PermissionController extends AdminBaseController {
      * 
      * @param page      Page number
      * @param size      Page size
-     * @param sortBy    Sort field
+     * @param search    Search term for name or description
+     * @param sortBy    Field to sort by
      * @param direction Sort direction
      * @return List of permissions
      */
     @GetMapping
-    @Operation(summary = "Get all permissions", description = "Retrieve a paginated list of all permissions")
+    @Operation(summary = "Get all permissions", description = "Retrieve a paginated list of all permissions with search capability")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved permissions list"),
             @ApiResponse(responseCode = "401", description = "You are not authorized to view the resource"),
             @ApiResponse(responseCode = "403", description = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasAuthority('permission:read')")
     public ResponseEntity<Map<String, Object>> getAllPermissions(
             @Parameter(description = "Page number (zero-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Search term for name or description") @RequestParam(required = false) String search,
             @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "name") String sortBy,
             @Parameter(description = "Sort direction (asc or desc)") @RequestParam(defaultValue = "asc") String direction) {
 
@@ -86,9 +89,8 @@ public class PermissionController extends AdminBaseController {
 
             Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC
                     : Sort.Direction.ASC;
-
             Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-            Page<Permission> permissionsPage = permissionService.getAllPermissions(pageable);
+            Page<Permission> permissionsPage = permissionService.getAllPermissions(search, pageable);
 
             List<PermissionDTO> permissions = permissionsPage.getContent().stream()
                     .map(this::convertToDTO)

@@ -32,7 +32,7 @@ export function* handleFetchPermissions(
   action: ReturnType<typeof fetchPermissionsRequest>
 ): Generator<any, void, any> {
   try {
-    const { page = 0, size = 10, sortBy = 'name', direction = 'asc' } = action.payload;
+    const { page = 0, size = 100, sortBy = 'name', direction = 'asc' } = action.payload;
     
     // Call the API
     const response = yield call(getAllPermissions, {
@@ -42,12 +42,28 @@ export function* handleFetchPermissions(
       direction
     });
     
+    // Check if response is an array (direct permissions data)
+    const permissions = Array.isArray(response) 
+      ? response 
+      : response.permissions || response.content || response.data || [];
+    
+    // Get pagination data or use defaults
+    const paginationData = !Array.isArray(response) ? {
+      currentPage: response.currentPage || response.number || page,
+      totalItems: response.totalItems || response.totalElements || permissions.length,
+      totalPages: response.totalPages || Math.ceil(permissions.length / size) || 1
+    } : {
+      currentPage: page,
+      totalItems: permissions.length,
+      totalPages: Math.ceil(permissions.length / size) || 1
+    };
+    
     // Update the store
     yield put(fetchPermissionsSuccess({
-      permissions: response.permissions,
-      currentPage: response.currentPage,
-      totalItems: response.totalItems,
-      totalPages: response.totalPages
+      permissions,
+      currentPage: paginationData.currentPage,
+      totalItems: paginationData.totalItems,
+      totalPages: paginationData.totalPages
     }));
   } catch (error: any) {
     // Extract error message

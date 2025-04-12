@@ -11,6 +11,7 @@ interface GetAllPermissionsParams {
   size?: number;
   sortBy?: string;
   direction?: string;
+  search?: string;
 }
 
 interface PermissionsResponse {
@@ -28,13 +29,17 @@ interface PermissionsResponse {
 export const getAllPermissions = async (
   params: GetAllPermissionsParams = {}
 ): Promise<PermissionsResponse> => {
-  const { page = 0, size = 10, sortBy = 'name', direction = 'asc' } = params;
+  const { page = 0, size = 10, sortBy = 'name', direction = 'asc', search = '' } = params;
   
   const queryParams = new URLSearchParams();
   queryParams.append('page', page.toString());
   queryParams.append('size', size.toString());
   queryParams.append('sortBy', sortBy);
   queryParams.append('direction', direction);
+  
+  if (search) {
+    queryParams.append('search', search);
+  }
   
   const url = `${PERMISSION_ENDPOINTS.GET_ALL}?${queryParams.toString()}`;
   return await apiService.get<PermissionsResponse>(url);

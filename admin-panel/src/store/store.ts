@@ -5,6 +5,7 @@ import createSagaMiddleware from 'redux-saga';
 
 import { authSlice } from '@app/store/reducers/auth';
 import { permissionsSlice } from '@app/store/reducers/permissions';
+import { rolesSlice } from '@app/store/reducers/roles';
 import { uiSlice } from '@app/store/reducers/ui';
 import rootSaga from './sagas';
 
@@ -16,6 +17,7 @@ const store = configureStore({
     auth: authSlice.reducer,
     ui: uiSlice.reducer,
     permissions: permissionsSlice.reducer,
+    roles: rolesSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false })

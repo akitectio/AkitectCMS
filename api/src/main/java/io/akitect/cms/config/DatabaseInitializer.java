@@ -1,5 +1,15 @@
 package io.akitect.cms.config;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
+
 import io.akitect.cms.model.Permission;
 import io.akitect.cms.model.Role;
 import io.akitect.cms.model.User;
@@ -8,15 +18,6 @@ import io.akitect.cms.repository.RoleRepository;
 import io.akitect.cms.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 @Configuration
 @Slf4j
@@ -81,7 +82,9 @@ public class DatabaseInitializer {
                     "lesson:read", "lesson:write", "lesson:delete",
                     "comment:read", "comment:write", "comment:delete",
                     "media:read", "media:write", "media:delete",
-                    "configuration:read", "configuration:write"
+                    "configuration:read", "configuration:write",
+                    "role:read", "role:write", "role:delete",
+                    "permission:read", "permission:write", "permission:delete"
             };
 
             for (String name : permissionNames) {
@@ -112,8 +115,7 @@ public class DatabaseInitializer {
                     "series:read", "series:write",
                     "lesson:read", "lesson:write",
                     "comment:read", "comment:write", "comment:delete",
-                    "media:read", "media:write", "media:delete"
-            )));
+                    "media:read", "media:write", "media:delete")));
             editorRole.setPermissions(editorPermissions);
             roleRepository.save(editorRole);
 
@@ -125,8 +127,7 @@ public class DatabaseInitializer {
                     "series:read", "series:write",
                     "lesson:read", "lesson:write",
                     "comment:read", "comment:write",
-                    "media:read", "media:write"
-            )));
+                    "media:read", "media:write")));
             authorRole.setPermissions(authorPermissions);
             roleRepository.save(authorRole);
 
@@ -137,8 +138,7 @@ public class DatabaseInitializer {
                     "category:read",
                     "series:read",
                     "lesson:read",
-                    "comment:read", "comment:write"
-            )));
+                    "comment:read", "comment:write")));
             userRole.setPermissions(userPermissions);
             roleRepository.save(userRole);
         }
