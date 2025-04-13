@@ -34,6 +34,7 @@ const UserForm = () => {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [checkingUsername, setCheckingUsername] = useState<boolean>(false);
   const [checkingEmail, setCheckingEmail] = useState<boolean>(false);
+  const [userDataLoaded, setUserDataLoaded] = useState<boolean>(false);
   const [initialValues, setInitialValues] = useState<{
     username: string;
     email: string;
@@ -167,10 +168,13 @@ const UserForm = () => {
         try {
           setLoading(true);
           const user = await userService.getUserById(id);
-          // Extract role IDs from user roles
-          const userRoleIds = user.roles && Array.isArray(user.roles) 
-            ? user.roles.map((role: any) => role.id || '') 
-            : [];
+          
+          // Use the roleIds array directly from the API response
+          // The API returns roleIds directly, no need to extract from roles array
+          const userRoleIds = user.roleIds || [];
+          
+          console.log('Fetched user:', user);
+          console.log('Extracted roleIds:', userRoleIds);
           
           setInitialValues({
             username: user.username || '',
@@ -194,6 +198,20 @@ const UserForm = () => {
     fetchUser();
   }, [isEditMode, id, navigate, t]);
   
+  // Use effect to debug role values and selected options
+  useEffect(() => {
+    if (isEditMode && initialValues.roleIds.length > 0) {
+      console.log('Initial role IDs:', initialValues.roleIds);
+      console.log('Available role options:', roleOptions);
+      
+      // Check if roleOptions contains all the expected role IDs
+      const matchedRoles = roleOptions.filter(option => 
+        initialValues.roleIds.includes(option.value)
+      );
+      console.log('Matched roles for display:', matchedRoles);
+    }
+  }, [isEditMode, initialValues.roleIds, roleOptions]);
+
   // Handle form submission
   const handleSubmit = async (values: any) => {
     // First, do a final check for username and email availability
@@ -301,6 +319,7 @@ const UserForm = () => {
               dirty,
               setFieldValue,
               setFieldError,
+              setFieldTouched,
             }) => (
               <Form noValidate onSubmit={handleSubmit}>
                 <Card>
@@ -412,15 +431,17 @@ const UserForm = () => {
                               isLoading={fetchingRoles}
                               isDisabled={fetchingRoles}
                               value={roleOptions.filter(option => 
-                                values.roleIds.includes(option.value)
+                                values.roleIds && values.roleIds.includes(option.value)
                               )}
-                              onChange={(selectedOptions) => {
+                              onChange={(selectedOptions: any) => {
                                 const selectedRoleIds = selectedOptions 
-                                  ? selectedOptions.map(option => option.value) 
+                                  ? selectedOptions.map((option: any) => option.value) 
                                   : [];
                                 setFieldValue('roleIds', selectedRoleIds);
                               }}
-                              onBlur={() => setFieldValue('touched.roleIds', true)}
+                              onBlur={() => setFieldTouched('roleIds', true)}
+                              menuPortalTarget={document.body} 
+                              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                             />
                             <Form.Text className="text-muted">
                               {t('users.roleSelectionHint')}

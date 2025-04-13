@@ -1,157 +1,187 @@
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ContentHeader } from '@components';
-import { Image, Button as RawButton } from '@profabric/react-components';
-import styled from 'styled-components';
-import ActivityTab from './ActivityTab';
-import TimelineTab from './TimelineTab';
-import SettingsTab from './SettingsTab';
-import { Button } from '@app/styles/common';
+import ContentHeader from '@app/components/content-header/ContentHeader';
+import userService from '@app/services/users';
 import { useAppSelector } from '@app/store/store';
+import { User } from '@app/types/user';
+import React, { useEffect, useState } from 'react';
+import { Button, Card, Col, Row } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
-const StyledUserImage = styled(Image)`
-  --pf-border: 3px solid #adb5bd;
-  --pf-padding: 3px;
-`;
-
-export const TabButton = styled(RawButton)`
-  margin-right: 0.25rem;
-  --pf-width: 8rem;
-`;
-
-const Profile = () => {
-  const [activeTab, setActiveTab] = useState('ACTIVITY');
+const Profile: React.FC = () => {
   const [t] = useTranslation();
-  const currentUser = useAppSelector((state) => state.auth.currentUser);
+  const { currentUser } = useAppSelector(state => state.auth);
+  const { items: roles } = useAppSelector(state => state.roles); // Lấy danh sách vai trò từ Redux store
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const toggle = (tab: string) => {
-    if (activeTab !== tab) setActiveTab(tab);
+  const getRoleNames = (roleIds: string[]) => {
+    return roleIds
+      .map(roleId => roles.find(role => role.id === roleId)?.name ?? roleId)
+      .join(', ');
   };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        if (currentUser?.id) { // Simplified using optional chaining
+          const userData = await userService.getUserById(currentUser.id);
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        toast.error(t('profile.fetchError'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [currentUser, t]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <div>{t('profile.userNotFound')}</div>;
+  }
 
   return (
     <>
-      <ContentHeader title="Profile" />
+      <ContentHeader title={t('profile.title')} />
+
       <section className="content">
         <div className="container-fluid">
-          <div className="row">
-            <div className="col-md-3">
-              <div className="card card-primary card-outline">
-                <div className="card-body box-profile">
+          <Row>
+            {/* Profile Information */}
+            <Col md={4}>
+              <Card className="card-primary card-outline">
+                <Card.Body className="box-profile">
                   <div className="text-center">
-                    <StyledUserImage
-                      width={100}
-                      height={100}
-                      rounded
-                      src={currentUser?.photoURL}
-                      fallbackSrc="/img/default-profile.png"
-                      alt="User profile"
+                    <img
+                      className="profile-user-img img-fluid img-circle"
+                      src={user.avatarUrl ?? '/img/default-profile.png'} // Updated to nullish coalescing
+                      alt={user.fullName ?? user.name ?? 'User avatar'} // Updated to nullish coalescing
                     />
                   </div>
+
                   <h3 className="profile-username text-center">
-                    {currentUser?.displayName}
+                    {user.fullName ?? user.name ?? user.username /* Updated to nullish coalescing */}
                   </h3>
-                  <p className="text-muted text-center">Software Engineer</p>
-                  <ul className="list-group list-group-unbordered mb-3">
-                    <li className="list-group-item">
-                      <b>{t('header.user.followers')}</b>
-                      <span className="float-right">1,322</span>
-                    </li>
-                    <li className="list-group-item">
-                      <b>{t('views.user.following')}</b>
-                      <span className="float-right">543</span>
-                    </li>
-                    <li className="list-group-item">
-                      <b>{t('header.user.friends')}</b>
-                      <span className="float-right">13,287</span>
-                    </li>
-                  </ul>
-                  <Button>{t('main.label.follow')}</Button>
-                </div>
-                {/* /.card-body */}
-              </div>
-              <div className="card card-primary">
-                <div className="card-header">
-                  <h3 className="card-title">{t('main.label.aboutMe')}</h3>
-                </div>
-                <div className="card-body">
+
+                  {user.roleIds && (
+                    <p className="text-muted text-center">
+                      {getRoleNames(user.roleIds)}
+                    </p>
+                  )}
+
+                  <Link to="/profile/edit">
+                    <Button variant="primary" block>
+                      {t('profile.editProfile')}
+                    </Button>
+                  </Link>
+                </Card.Body>
+              </Card>
+
+              <Card className="card-primary">
+                <Card.Header>
+                  <h3 className="card-title">{t('profile.about')}</h3>
+                </Card.Header>
+                <Card.Body>
                   <strong>
-                    <i className="fas fa-book mr-1" />
-                    {t('main.label.education')}
+                    <i className="fas fa-user mr-1"></i> {t('profile.username')}
+                  </strong>
+                  <p className="text-muted">{user.username}</p>
+
+                  <hr />
+
+                  <strong>
+                    <i className="fas fa-envelope mr-1"></i> {t('profile.email')}
+                  </strong>
+                  <p className="text-muted">{user.email}</p>
+
+                  <hr />
+
+                  <strong>
+                    <i className="fas fa-clock mr-1"></i> {t('profile.lastLogin')}
                   </strong>
                   <p className="text-muted">
-                    B.S. in Computer Science from the University of Tennessee at
-                    Knoxville
+                    {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : t('profile.never')}
                   </p>
-                  <hr />
-                  <strong>
-                    <i className="fas fa-map-marker-alt mr-1" />
-                    {t('main.label.location')}
-                  </strong>
-                  <p className="text-muted">Malibu, California</p>
-                  <hr />
-                  <strong>
-                    <i className="fas fa-pencil-alt mr-1" />
-                    {t('main.label.skills')}
-                  </strong>
-                  <p className="text-muted">
-                    <span className="tag tag-danger">UI Design</span>
-                    <span className="tag tag-success">Coding</span>
-                    <span className="tag tag-info">Javascript</span>
-                    <span className="tag tag-warning">PHP</span>
-                    <span className="tag tag-primary">Node.js</span>
-                  </p>
-                  <hr />
-                  <strong>
-                    <i className="far fa-file-alt mr-1" />
-                    {t('main.label.notes')}
-                  </strong>
-                  <p className="text-muted">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                    Etiam fermentum enim neque.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-9">
-              <div className="card">
-                <div className="card-header p-2">
-                  <ul className="nav nav-pills">
-                    <li className="nav-item">
-                      <TabButton
-                        variant={activeTab === 'ACTIVITY' ? 'primary' : 'light'}
-                        onClick={() => toggle('ACTIVITY')}
-                      >
-                        {t('main.label.activity')}
-                      </TabButton>
-                    </li>
-                    <li className="nav-item">
-                      <TabButton
-                        variant={activeTab === 'TIMELINE' ? 'primary' : 'light'}
-                        onClick={() => toggle('TIMELINE')}
-                      >
-                        {t('main.label.timeline')}
-                      </TabButton>
-                    </li>
-                    <li className="nav-item">
-                      <TabButton
-                        variant={activeTab === 'SETTINGS' ? 'primary' : 'light'}
-                        onClick={() => toggle('SETTINGS')}
-                      >
-                        {t('main.label.settings')}
-                      </TabButton>
-                    </li>
-                  </ul>
-                </div>
-                <div className="card-body">
-                  <div className="tab-content">
-                    <ActivityTab isActive={activeTab === 'ACTIVITY'} />
-                    <TimelineTab isActive={activeTab === 'TIMELINE'} />
-                    <SettingsTab isActive={activeTab === 'SETTINGS'} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            {/* Account Management */}
+            <Col md={8}>
+              <Card className="card-primary card-outline">
+                <Card.Header>
+                  <h3 className="card-title">{t('profile.accountManagement')}</h3>
+                </Card.Header>
+                <Card.Body>
+                  <Row>
+                    <Col sm={6}>
+                      <Card>
+                        <Card.Body>
+                          <h5>
+                            <i className="fas fa-key mr-2"></i>
+                            {t('profile.securitySettings')}
+                          </h5>
+                          <p>{t('profile.securitySettingsDesc')}</p>
+                          <Link to="/profile/change-password">
+                            <Button variant="primary" size="sm">
+                              {t('profile.changePassword')}
+                            </Button>
+                          </Link>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+
+                    <Col sm={6}>
+                      <Card>
+                        <Card.Body>
+                          <h5>
+                            <i className="fas fa-history mr-2"></i>
+                            {t('profile.sessionManagement')}
+                          </h5>
+                          <p>{t('profile.sessionManagementDesc')}</p>
+                          <Link to="/profile/sessions">
+                            <Button variant="primary" size="sm">
+                              {t('profile.viewSessions')}
+                            </Button>
+                          </Link>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  </Row>
+
+                  <Row className="mt-3">
+                    <Col sm={12}>
+                      <Card>
+                        <Card.Body>
+                          <h5>
+                            <i className="fas fa-shield-alt mr-2"></i>
+                            {t('profile.accountStatus')}
+                          </h5>
+                          <p>
+                            {t('profile.accountStatusDesc')}
+                          </p>
+                          <div>
+                            <strong>{t('profile.status')}:</strong>{' '}
+                            <span className={`badge bg-${user.status === 'ACTIVE' ? 'success' : 'danger'}`}>
+                              {user.status}
+                            </span>
+                          </div>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
         </div>
       </section>
     </>

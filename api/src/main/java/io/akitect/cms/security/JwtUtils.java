@@ -1,18 +1,27 @@
 package io.akitect.cms.security;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
-import io.akitect.cms.model.User;
-import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.UUID;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.UUID;
+import io.akitect.cms.model.User;
+import io.akitect.cms.repository.UserSessionRepository;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -24,6 +33,14 @@ public class JwtUtils {
     @Value("${akitect.cms.jwt.expiration:86400000}")
     private int jwtExpirationMs;
 
+    @Autowired
+    private UserSessionRepository userSessionRepository;
+
+    // Add getter for JWT expiration
+    public int getJwtExpirationMs() {
+        return jwtExpirationMs;
+    }
+
     public String generateJwtToken(Authentication authentication) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
 
@@ -34,10 +51,13 @@ public class JwtUtils {
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .claim("userId", userPrincipal.getId())
                 .claim("superAdmin", userPrincipal.isSuperAdmin())
+                .claim("sessionId", UUID.randomUUID().toString()) // Add unique session identifier
                 .compact();
     }
 
     public String generateJwtToken(User user) {
+        UUID sessionId = UUID.randomUUID();
+
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date())
@@ -45,6 +65,7 @@ public class JwtUtils {
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .claim("userId", user.getId())
                 .claim("superAdmin", user.isSuperAdmin())
+                .claim("sessionId", sessionId.toString()) // Add unique session identifier
                 .compact();
     }
 
@@ -81,12 +102,22 @@ public class JwtUtils {
                 .get("superAdmin", Boolean.class);
     }
 
+    public String getSessionIdFromJwtToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("sessionId", String.class);
+    }
+
     public boolean validateJwtToken(String authToken) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(authToken);
+            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(authToken);
+
+            // Check if token is associated with active session
+            updateTokenActivity(authToken);
+
             return true;
         } catch (SignatureException e) {
             log.error("Invalid JWT signature: {}", e.getMessage());
@@ -98,8 +129,17 @@ public class JwtUtils {
             log.error("JWT token is unsupported: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             log.error("JWT claims string is empty: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("JWT validation error: {}", e.getMessage());
         }
-
         return false;
+    }
+
+    private void updateTokenActivity(String token) {
+        try {
+            userSessionRepository.updateLastActivity(token, LocalDateTime.now());
+        } catch (Exception e) {
+            log.warn("Failed to update token activity: {}", e.getMessage());
+        }
     }
 }

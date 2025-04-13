@@ -262,7 +262,15 @@
     "delete": "Xóa",
     "confirm": "Xác Nhận",
     "yes": "Có",
-    "no": "Không"
+    "no": "Không",
+    "actions": "Hành động",
+    "edit": "Chỉnh sửa",
+    "back": "Quay lại",
+    "submit": "Gửi",
+    "search": "Tìm kiếm",
+    "loading": "Đang tải...",
+    "noData": "Không có dữ liệu",
+    "confirmDelete": "Bạn có chắc chắn muốn xóa mục này?"
   },
   "validation": {
     "required": "Trường này là bắt buộc",
@@ -280,5 +288,60 @@
     "entries": "kết quả",
     "previous": "Trước",
     "next": "Tiếp"
+  },
+  "profile": {
+    "title": "Hồ sơ",
+    "editProfile": "Chỉnh sửa hồ sơ",
+    "changePassword": "Đổi mật khẩu",
+    "username": "Tên đăng nhập",
+    "email": "Email",
+    "fullName": "Họ và tên",
+    "about": "Thông tin",
+    "lastLogin": "Đăng nhập lần cuối",
+    "never": "Chưa bao giờ",
+    "fetchError": "Không thể tải dữ liệu hồ sơ",
+    "userNotFound": "Không tìm thấy người dùng",
+    "accountManagement": "Quản lý tài khoản",
+    "securitySettings": "Cài đặt bảo mật",
+    "securitySettingsDesc": "Quản lý mật khẩu và bảo mật tài khoản",
+    "sessionManagement": "Quản lý phiên đăng nhập",
+    "sessionManagementDesc": "Xem và quản lý các phiên đăng nhập của bạn",
+    "viewSessions": "Xem lịch sử đăng nhập",
+    "accountStatus": "Trạng thái tài khoản",
+    "accountStatusDesc": "Thông tin về trạng thái tài khoản của bạn",
+    "status": "Trạng thái"
+  },
+  "sessions": {
+    "sessionManagement": "Quản lý phiên đăng nhập",
+    "history": "Lịch sử đăng nhập",
+    "device": "Thiết bị",
+    "ipAddress": "Địa chỉ IP",
+    "loginTime": "Thời gian đăng nhập",
+    "lastActivity": "Hoạt động lần cuối",
+    "status": "Trạng thái",
+    "revoke": "Thu hồi",
+    "revokeAllOtherDevices": "Thu hồi tất cả thiết bị khác",
+    "current": "Hiện tại",
+    "active": "Đang hoạt động",
+    "inactive": "Không hoạt động",
+    "expired": "Đã hết hạn",
+    "revoked": "Đã thu hồi",
+    "noSessions": "Không tìm thấy phiên đăng nhập nào",
+    "modals": {
+      "revokeTitle": "Thu hồi phiên đăng nhập",
+      "revokeMessage": "Bạn có chắc chắn muốn thu hồi phiên đăng nhập này? Hành động này sẽ đăng xuất thiết bị liên kết với phiên này.",
+      "revokeAllTitle": "Thu hồi tất cả phiên đăng nhập khác",
+      "revokeAllMessage": "Bạn có chắc chắn muốn thu hồi tất cả phiên đăng nhập khác? Hành động này sẽ đăng xuất tất cả các thiết bị khác."
+    },
+    "errors": {
+      "fetchFailed": "Không thể tải dữ liệu phiên đăng nhập",
+      "revokeFailed": "Không thể thu hồi phiên đăng nhập",
+      "revokeAllFailed": "Không thể thu hồi tất cả phiên đăng nhập khác",
+      "cannotRevokeCurrent": "Không thể thu hồi phiên đăng nhập hiện tại"
+    },
+    "messages": {
+      "revokeSuccess": "Thu hồi phiên đăng nhập thành công",
+      "revokeAllSuccess": "Thu hồi tất cả phiên đăng nhập khác thành công"
+    }
   }
 }

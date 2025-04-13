@@ -1,26 +1,25 @@
 // Removed unused import of User from firebase/auth
 // import { User } from 'firebase/auth';
 
+import { User } from '@app/types/user';
+
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
   LOCKED = 'LOCKED'
 }
 
+// Updated User type to include missing properties
 export interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
-  name: string;
   fullName?: string;
-  photoURL?: string;
-  status?: UserStatus;
-  metadata?: {
-    creationTime: string;
-    lastSignInTime?: string;
-  };
-  roles?: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  name?: string;
+  avatarUrl?: string | null;
+  roleIds?: string[];
+  lastLogin?: string;
+  status: string;
+  superAdmin?: boolean;
 }
 
 export type IUser = User;
@@ -31,6 +30,7 @@ export interface UserCreateRequest {
   password: string;
   fullName: string;
   roleIds: string[];
+  superAdmin?: boolean;
 }
 
 export interface UserUpdateRequest {
@@ -38,6 +38,7 @@ export interface UserUpdateRequest {
   email: string;
   fullName: string;
   roleIds: string[];
+  superAdmin?: boolean;
 }
 
 export interface Permission {

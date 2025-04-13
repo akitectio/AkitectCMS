@@ -15,6 +15,9 @@ const API_PATHS = {
   ROLES: '/roles',
 };
 
+// Add a base path for admin routes if needed
+const ADMIN_PREFIX = '/admin';
+
 // Auth endpoints
 export const AUTH_ENDPOINTS = {
   LOGIN: `${API_PATHS.AUTH}/login`,
@@ -109,4 +112,14 @@ export const SETTINGS_ENDPOINTS = {
   UPDATE: API_PATHS.SETTINGS,
   GET_BY_KEY: (key: string) => `${API_PATHS.SETTINGS}/${key}`,
   UPDATE_BY_KEY: (key: string) => `${API_PATHS.SETTINGS}/${key}`,
+};
+
+// Add endpoints for session management
+export const SESSION_ENDPOINTS = {
+  GET_MY_ACTIVE: `${API_PATHS.AUTH}/sessions/my`,
+  GET_MY_HISTORY: `${API_PATHS.AUTH}/sessions/my/history`,
+  REVOKE_SESSION: (sessionId) => `${API_PATHS.AUTH}/sessions/${sessionId}`,
+  REVOKE_OTHER_SESSIONS: `${API_PATHS.AUTH}/sessions/revoke-others`,
+  GET_USER_SESSIONS: (userId) => `${ADMIN_PREFIX}${API_PATHS.AUTH}/sessions/user/${userId}`,
+  REVOKE_USER_SESSION: (userId, sessionId) => `${ADMIN_PREFIX}${API_PATHS.AUTH}/sessions/user/${userId}/session/${sessionId}`,
 };

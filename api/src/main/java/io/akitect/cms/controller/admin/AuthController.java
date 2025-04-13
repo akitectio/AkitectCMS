@@ -36,6 +36,18 @@ public class AuthController extends AdminBaseController {
         return ResponseEntity.ok(jwtResponse);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutUser(HttpServletRequest request) {
+        String jwt = parseJwt(request);
+        boolean result = authService.logout(jwt, request);
+
+        if (result) {
+            return ResponseEntity.ok(new MessageResponse("Logged out successfully"));
+        } else {
+            return ResponseEntity.ok(new MessageResponse("No active session found"));
+        }
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterDTO registerDTO, HttpServletRequest request) {
         MessageResponse response = authService.register(registerDTO, request);
@@ -52,5 +64,16 @@ public class AuthController extends AdminBaseController {
         Map<String, Boolean> response = new HashMap<>();
         response.put("valid", isValid);
         return ResponseEntity.ok(response);
+    }
+
+    // Helper method to extract JWT from request
+    private String parseJwt(HttpServletRequest request) {
+        String headerAuth = request.getHeader("Authorization");
+
+        if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
+            return headerAuth.substring(7);
+        }
+
+        return null;
     }
 }

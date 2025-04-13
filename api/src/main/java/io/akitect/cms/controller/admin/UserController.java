@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,11 +31,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.akitect.cms.dto.MessageResponse;
 import io.akitect.cms.dto.UserCreateDTO;
+import io.akitect.cms.exception.UserNotFoundException;
 import io.akitect.cms.model.Role;
 import io.akitect.cms.model.User;
+import io.akitect.cms.repository.ActivityLogRepository;
 import io.akitect.cms.repository.RoleRepository;
 import io.akitect.cms.repository.UserRepository;
 import io.akitect.cms.security.UserDetailsImpl;
+import io.akitect.cms.service.AuthService;
 import io.akitect.cms.util.Constants;
 import io.akitect.cms.util.enums.UserStatusEnum;
 import jakarta.validation.Valid;
@@ -45,14 +47,34 @@ import jakarta.validation.Valid;
 @RequestMapping(Constants.ADMIN_BASE_PATH + "/users") // Use centralized constant for base path
 public class UserController extends AdminBaseController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
+    private final ActivityLogRepository activityLogRepository;
 
-    @Autowired
-    private RoleRepository roleRepository;
+    public UserController(UserRepository userRepository, RoleRepository roleRepository,
+            PasswordEncoder passwordEncoder, AuthService authService,
+            ActivityLogRepository activityLogRepository) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authService = authService;
+        this.activityLogRepository = activityLogRepository;
+    }
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    // Define constants for repeated string literals
+    private static final String USER_NOT_FOUND = "User not found";
+    private static final String USERNAME = "username";
+    private static final String FULL_NAME = "fullName";
+    private static final String AVATAR_URL = "avatarUrl";
+    private static final String STATUS = "status";
+    private static final String EMAIL_VERIFIED = "emailVerified";
+    private static final String LAST_LOGIN = "lastLogin";
+    private static final String SUPER_ADMIN = "superAdmin";
+    private static final String CREATED_AT = "createdAt";
+    private static final String UPDATED_AT = "updatedAt";
+    private static final String ROLES = "roles";
 
     /**
      * Get current user profile information
@@ -63,24 +85,24 @@ public class UserController extends AdminBaseController {
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         User user = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", user.getId());
-        response.put("username", user.getUsername());
+        response.put(USERNAME, user.getUsername());
         response.put("email", user.getEmail());
-        response.put("fullName", user.getFullName());
-        response.put("avatarUrl", user.getAvatarUrl());
+        response.put(FULL_NAME, user.getFullName());
+        response.put(AVATAR_URL, user.getAvatarUrl());
         response.put("bio", user.getBio());
-        response.put("status", user.getStatus());
-        response.put("emailVerified", user.isEmailVerified());
-        response.put("lastLogin", user.getLastLogin());
-        response.put("superAdmin", user.isSuperAdmin());
-        response.put("createdAt", user.getCreatedAt());
-        response.put("updatedAt", user.getUpdatedAt());
+        response.put(STATUS, user.getStatus());
+        response.put(EMAIL_VERIFIED, user.isEmailVerified());
+        response.put(LAST_LOGIN, user.getLastLogin());
+        response.put(SUPER_ADMIN, user.isSuperAdmin());
+        response.put(CREATED_AT, user.getCreatedAt());
+        response.put(UPDATED_AT, user.getUpdatedAt());
 
         // Add roles without circular references
-        response.put("roles", user.getRoles().stream().map(Role::getName).toList());
+        response.put(ROLES, user.getRoles().stream().map(Role::getName).toList());
 
         // Add permissions to allow frontend permission checks
         Set<String> permissions = new HashSet<>();
@@ -163,20 +185,20 @@ public class UserController extends AdminBaseController {
                 .map(user -> {
                     Map<String, Object> userDTO = new HashMap<>();
                     userDTO.put("id", user.getId());
-                    userDTO.put("username", user.getUsername());
+                    userDTO.put(USERNAME, user.getUsername());
                     userDTO.put("email", user.getEmail());
-                    userDTO.put("fullName", user.getFullName());
-                    userDTO.put("avatarUrl", user.getAvatarUrl());
+                    userDTO.put(FULL_NAME, user.getFullName());
+                    userDTO.put(AVATAR_URL, user.getAvatarUrl());
                     userDTO.put("bio", user.getBio());
-                    userDTO.put("status", user.getStatus());
-                    userDTO.put("emailVerified", user.isEmailVerified());
-                    userDTO.put("lastLogin", user.getLastLogin());
-                    userDTO.put("superAdmin", user.isSuperAdmin());
-                    userDTO.put("createdAt", user.getCreatedAt());
-                    userDTO.put("updatedAt", user.getUpdatedAt());
+                    userDTO.put(STATUS, user.getStatus());
+                    userDTO.put(EMAIL_VERIFIED, user.isEmailVerified());
+                    userDTO.put(LAST_LOGIN, user.getLastLogin());
+                    userDTO.put(SUPER_ADMIN, user.isSuperAdmin());
+                    userDTO.put(CREATED_AT, user.getCreatedAt());
+                    userDTO.put(UPDATED_AT, user.getUpdatedAt());
 
                     // Add roles without circular references (only role names)
-                    userDTO.put("roles", user.getRoles().stream().map(Role::getName).toList());
+                    userDTO.put(ROLES, user.getRoles().stream().map(Role::getName).toList());
 
                     return userDTO;
                 })
@@ -192,36 +214,28 @@ public class UserController extends AdminBaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable UUID id) {
+    public ResponseEntity<Map<String, Object>> getUserById(@PathVariable UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(id));
 
-        Map<String, Object> userDTO = new HashMap<>();
-        userDTO.put("id", user.getId());
-        userDTO.put("username", user.getUsername());
-        userDTO.put("email", user.getEmail());
-        userDTO.put("fullName", user.getFullName());
-        userDTO.put("status", user.getStatus());
-        userDTO.put("roles", user.getRoles().stream().map(Role::getName).toList());
-
+        Map<String, Object> userDTO = convertUserToDTO(user);
         return ResponseEntity.ok(userDTO);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable UUID id, @Valid @RequestBody UserCreateDTO userUpdateDTO) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 
-        // Check if username is already taken by another user
+        // Simplify boolean expressions
         if (!user.getUsername().equals(userUpdateDTO.getUsername()) &&
-                userRepository.existsByUsername(userUpdateDTO.getUsername())) {
+                Boolean.TRUE.equals(userRepository.existsByUsername(userUpdateDTO.getUsername()))) {
             return ResponseEntity
                     .status(HttpStatus.CONFLICT)
                     .body(MessageResponse.error("Error: Username is already taken!"));
         }
 
-        // Check if email is already used by another user
         if (!user.getEmail().equals(userUpdateDTO.getEmail()) &&
-                userRepository.existsByEmail(userUpdateDTO.getEmail())) {
+                Boolean.TRUE.equals(userRepository.existsByEmail(userUpdateDTO.getEmail()))) {
             return ResponseEntity
                     .status(HttpStatus.CONFLICT)
                     .body(MessageResponse.error("Error: Email is already in use!"));
@@ -238,6 +252,11 @@ public class UserController extends AdminBaseController {
         user.setEmail(userUpdateDTO.getEmail());
         user.setFullName(userUpdateDTO.getFullName());
         user.setUpdatedAt(LocalDateTime.now());
+
+        // Only update password if one is provided
+        if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userUpdateDTO.getPassword()));
+        }
 
         // Update user roles
         Set<Role> roles = new HashSet<>();
@@ -256,23 +275,31 @@ public class UserController extends AdminBaseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable UUID id) {
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found");
+            throw new RuntimeException(USER_NOT_FOUND);
         }
         userRepository.deleteById(id);
     }
 
     @PutMapping("/{id}/lock")
     public ResponseEntity<?> lockUser(@PathVariable UUID id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
         user.setStatus("LOCKED");
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
-        return ResponseEntity.ok(convertUserToDTO(user));
+
+        // Revoke all active sessions for security
+        int revokedSessions = authService.revokeAllUserSessions(id, "ACCOUNT_LOCKED");
+
+        Map<String, Object> response = new HashMap<>();
+        response.putAll(convertUserToDTO(user));
+        response.put("sessionsRevoked", revokedSessions);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}/unlock")
     public ResponseEntity<?> unlockUser(@PathVariable UUID id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
         user.setStatus("ACTIVE");
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
@@ -281,17 +308,25 @@ public class UserController extends AdminBaseController {
 
     @PutMapping("/{id}/reset-password")
     public ResponseEntity<?> resetPassword(@PathVariable UUID id, @RequestParam String newPassword) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
         user.setPassword(passwordEncoder.encode(newPassword)); // Properly encode the password
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
-        return ResponseEntity.ok(convertUserToDTO(user));
+
+        // Revoke all active sessions for security after password reset
+        int revokedSessions = authService.revokeAllUserSessions(id, "PASSWORD_RESET");
+
+        Map<String, Object> response = new HashMap<>();
+        response.putAll(convertUserToDTO(user));
+        response.put("sessionsRevoked", revokedSessions);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}/toggle-super-admin")
     public ResponseEntity<?> toggleSuperAdmin(@PathVariable UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
 
         // Toggle the superAdmin status
         user.setSuperAdmin(!user.isSuperAdmin());
@@ -300,7 +335,7 @@ public class UserController extends AdminBaseController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", user.getId());
-        response.put("superAdmin", user.isSuperAdmin());
+        response.put(SUPER_ADMIN, user.isSuperAdmin());
 
         return ResponseEntity.ok(response);
     }
@@ -350,6 +385,38 @@ public class UserController extends AdminBaseController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}/activity-logs")
+    public ResponseEntity<?> getUserActivityLogs(@PathVariable UUID id) {
+        List<Map<String, Object>> activityLogs = activityLogRepository.findByUserOrderByCreatedAtDesc(
+                userRepository.findById(id).orElseThrow(() -> new RuntimeException(USER_NOT_FOUND)))
+                .stream()
+                .map(log -> {
+                    Map<String, Object> logDTO = new HashMap<>();
+                    logDTO.put("id", log.getId());
+                    logDTO.put("action", log.getAction());
+                    logDTO.put("details", log.getDetails());
+                    logDTO.put("ipAddress", log.getIpAddress());
+                    logDTO.put("userAgent", log.getUserAgent());
+                    logDTO.put("createdAt", log.getCreatedAt());
+                    return logDTO;
+                })
+                .toList();
+
+        return ResponseEntity.ok(activityLogs);
+    }
+
+    @GetMapping("/auth/sessions/user/{id}")
+    public ResponseEntity<?> getUserSessions(@PathVariable UUID id) {
+        // Check if the user exists
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
+
+        // Fetch user sessions from the AuthService
+        List<Map<String, Object>> sessions = authService.getUserSessions(id);
+
+        return ResponseEntity.ok(sessions);
+    }
+
     /**
      * Converts a User entity to a DTO map without password and with simplified
      * roles
@@ -360,20 +427,23 @@ public class UserController extends AdminBaseController {
     private Map<String, Object> convertUserToDTO(User user) {
         Map<String, Object> userDTO = new HashMap<>();
         userDTO.put("id", user.getId());
-        userDTO.put("username", user.getUsername());
+        userDTO.put(USERNAME, user.getUsername());
         userDTO.put("email", user.getEmail());
-        userDTO.put("fullName", user.getFullName());
-        userDTO.put("avatarUrl", user.getAvatarUrl());
+        userDTO.put(FULL_NAME, user.getFullName());
+        userDTO.put(AVATAR_URL, user.getAvatarUrl());
         userDTO.put("bio", user.getBio());
-        userDTO.put("status", user.getStatus());
-        userDTO.put("emailVerified", user.isEmailVerified());
-        userDTO.put("lastLogin", user.getLastLogin());
-        userDTO.put("superAdmin", user.isSuperAdmin());
-        userDTO.put("createdAt", user.getCreatedAt());
-        userDTO.put("updatedAt", user.getUpdatedAt());
+        userDTO.put(STATUS, user.getStatus());
+        userDTO.put(EMAIL_VERIFIED, user.isEmailVerified());
+        userDTO.put(LAST_LOGIN, user.getLastLogin());
+        userDTO.put(SUPER_ADMIN, user.isSuperAdmin());
+        userDTO.put(CREATED_AT, user.getCreatedAt());
+        userDTO.put(UPDATED_AT, user.getUpdatedAt());
 
         // Add roles without circular references (only role names)
-        userDTO.put("roles", user.getRoles().stream().map(Role::getName).toList());
+        userDTO.put(ROLES, user.getRoles().stream().map(Role::getName).toList());
+
+        // Add role IDs for frontend form selection
+        userDTO.put("roleIds", user.getRoles().stream().map(Role::getId).toList());
 
         return userDTO;
     }
