@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-AkitectCmsApplication<akitect-cms>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "io.akitect.cms.AkitectCmsApplication",
+            "projectName": "akitect-cms",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

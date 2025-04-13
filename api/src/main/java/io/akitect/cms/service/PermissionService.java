@@ -44,17 +44,15 @@ public class PermissionService {
     private Specification<Permission> buildSearchSpecification(String search) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            
+
             if (StringUtils.hasText(search)) {
                 String searchLike = "%" + search.toLowerCase() + "%";
                 predicates.add(
-                    criteriaBuilder.or(
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), searchLike),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), searchLike)
-                    )
-                );
+                        criteriaBuilder.or(
+                                criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), searchLike),
+                                criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), searchLike)));
             }
-            
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }

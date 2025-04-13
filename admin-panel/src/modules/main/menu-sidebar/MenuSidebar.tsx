@@ -25,6 +25,11 @@ export const MENU: IMenuItem[] = [
     icon: 'fas fa-shield-alt nav-icon',
     children: [
       {
+        name: 'Users',
+        icon: 'fas fa-users nav-icon',
+        path: '/users',
+      },
+      {
         name: 'Roles',
         icon: 'fas fa-shield-halved nav-icon',
         path: '/roles',
@@ -33,28 +38,6 @@ export const MENU: IMenuItem[] = [
         name: 'Permissions',
         icon: 'fas fa-lock nav-icon',
         path: '/permissions',
-      },
-    ],
-  },
-  {
-    name: i18n.t('menusidebar.label.blank'),
-    icon: 'fas fa-wrench nav-icon',
-    path: '/blank',
-  },
-  {
-    name: i18n.t('menusidebar.label.mainMenu'),
-    icon: 'far fa-caret-square-down nav-icon',
-    children: [
-      {
-        name: i18n.t('menusidebar.label.subMenu'),
-        icon: 'fas fa-hammer nav-icon',
-        path: '/sub-menu-1',
-      },
-
-      {
-        name: i18n.t('menusidebar.label.blank'),
-        icon: 'fas fa-cogs nav-icon',
-        path: '/sub-menu-2',
       },
     ],
   },

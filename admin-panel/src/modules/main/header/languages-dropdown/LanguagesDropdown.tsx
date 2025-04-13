@@ -15,24 +15,9 @@ const languages: Language[] = [
     label: 'header.language.english',
   },
   {
-    key: 'tr',
-    icon: 'flag-icon-tr',
-    label: 'header.language.turkish',
-  },
-  {
-    key: 'de',
-    icon: 'flag-icon-de',
-    label: 'header.language.german',
-  },
-  {
-    key: 'fr',
-    icon: 'flag-icon-fr',
-    label: 'header.language.french',
-  },
-  {
-    key: 'es',
-    icon: 'flag-icon-es',
-    label: 'header.language.spanish',
+    key: 'vi',
+    icon: 'flag-icon-vn',
+    label: 'header.language.vietnamese',
   },
 ];
 

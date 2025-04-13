@@ -4,7 +4,7 @@ import {
   RoleUpdateRequest
 } from '@app/types/user';
 import apiService from './api';
-import { ROLE_ENDPOINTS } from './apiEndpoints';
+import { PERMISSION_ENDPOINTS, ROLE_ENDPOINTS } from './apiEndpoints';
 
 interface GetAllRolesParams {
   page?: number;

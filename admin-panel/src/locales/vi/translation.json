@@ -1,0 +1,284 @@
+{
+  "login": {
+    "label": {
+      "signIn": "Đăng nhập để bắt đầu phiên làm việc",
+      "rememberMe": "Ghi nhớ đăng nhập",
+      "forgotPass": "Tôi quên mật khẩu",
+      "registerNew": "Đăng ký tài khoản mới"
+    },
+    "button": {
+      "signIn": {
+        "label": "Đăng Nhập",
+        "social": "Đăng nhập bằng {{what}}"
+      },
+      "signUp": {
+        "label": "Đăng Ký",
+        "social": "Đăng ký bằng {{what}}"
+      },
+      "signOut": "Đăng Xuất"
+    }
+  },
+  "register": {
+    "alreadyHave": "Tôi đã có tài khoản",
+    "registerNew": "Đăng ký tài khoản mới",
+    "label": "Đăng Ký"
+  },
+  "recover": {
+    "forgotYourPassword": "Bạn quên mật khẩu? Tại đây bạn có thể dễ dàng lấy lại mật khẩu mới.",
+    "oneStepAway": "Bạn chỉ còn một bước nữa để có mật khẩu mới, hãy khôi phục mật khẩu ngay.",
+    "changePassword": "Đổi Mật Khẩu",
+    "requestNewPassword": "Yêu Cầu Mật Khẩu Mới"
+  },
+  "main": {
+    "label": {
+      "moreInfo": "Thêm thông tin",
+      "follow": "Theo dõi",
+      "aboutMe": "Về Tôi",
+      "education": "Học Vấn",
+      "location": "Địa Điểm",
+      "skills": "Kỹ Năng",
+      "notes": "Ghi Chú",
+      "activity": "Hoạt Động",
+      "timeline": "Dòng Thời Gian",
+      "settings": "Cài Đặt"
+    }
+  },
+  "header": {
+    "label": {
+      "home": "Trang Chủ",
+      "contact": "Liên Hệ"
+    },
+    "language": {
+      "turkish": "Tiếng Thổ Nhĩ Kỳ",
+      "english": "Tiếng Anh",
+      "german": "Tiếng Đức",
+      "french": "Tiếng Pháp",
+      "spanish": "Tiếng Tây Ban Nha",
+      "vietnamese": "Tiếng Việt"
+    },
+    "messages": {
+      "ago": "{{quantity}} {{unit}} Trước",
+      "seeAll": "Xem Tất Cả Tin Nhắn"
+    },
+    "notifications": {
+      "count": "{{quantity}} Thông Báo",
+      "newMessagesCount": "{{quantity}} tin nhắn mới",
+      "friendRequestsCount": "{{quantity}} lời mời kết bạn",
+      "reportsCount": "{{quantity}} báo cáo mới",
+      "seeAll": "Xem Tất Cả Thông Báo"
+    },
+    "user": {
+      "profile": "Hồ Sơ",
+      "followers": "Người Theo Dõi",
+      "sales": "Bán Hàng",
+      "friends": "Bạn Bè"
+    }
+  },
+  "menusidebar": {
+    "label": {
+      "dashboard": "Bảng Điều Khiển",
+      "profile": "Hồ Sơ",
+      "blank": "Trang Trống",
+      "mainMenu": "Menu Chính",
+      "subMenu": "Menu Phụ",
+      "roles": "Vai Trò",
+      "permissions": "Quyền Hạn",
+      "users": "Người Dùng"
+    }
+  },
+  "footer": {
+    "version": "Phiên Bản",
+    "copyright": "Đã đăng ký bản quyền."
+  },
+  "views": {
+    "user": {
+      "profile": "Hồ Sơ Người Dùng",
+      "following": "Đang Theo Dõi"
+    }
+  },
+  "measurement": {
+    "quantityUnit": "{{quantity}} {{unit}}"
+  },
+  "roles": {
+    "management": "Quản Lý Vai Trò",
+    "list": "Danh Sách Vai Trò",
+    "create": "Tạo Vai Trò",
+    "edit": "Chỉnh Sửa Vai Trò",
+    "name": "Tên",
+    "description": "Mô Tả",
+    "permissions": "Quyền Hạn",
+    "actions": "Hành Động",
+    "permissionsCount": "{{count}} quyền",
+    "addNew": "Thêm Vai Trò Mới",
+    "delete": {
+      "title": "Xóa Vai Trò",
+      "confirmation": "Bạn có chắc chắn muốn xóa vai trò này?",
+      "warning": "Hành động này không thể hoàn tác. Xóa vai trò sẽ loại bỏ nó khỏi tất cả người dùng đã được gán.",
+      "button": {
+        "cancel": "Hủy Bỏ",
+        "confirm": "Xóa Vai Trò",
+        "deleting": "Đang xóa..."
+      }
+    },
+    "permissionsModal": {
+      "title": "Quyền hạn cho {{name}}",
+      "permissionName": "Tên Quyền Hạn",
+      "noPermissions": "Không có quyền hạn nào được gán cho vai trò này.",
+      "close": "Đóng"
+    },
+    "form": {
+      "name": "Tên Vai Trò",
+      "namePlaceholder": "Nhập tên vai trò",
+      "description": "Mô Tả",
+      "descriptionPlaceholder": "Nhập mô tả vai trò",
+      "selectPermissions": "Chọn Quyền Hạn",
+      "submit": "Lưu Vai Trò",
+      "cancel": "Hủy Bỏ",
+      "saving": "Đang lưu..."
+    },
+    "messages": {
+      "createSuccess": "Vai trò được tạo thành công",
+      "updateSuccess": "Vai trò được cập nhật thành công",
+      "deleteSuccess": "Vai trò được xóa thành công"
+    },
+    "search": "Tìm kiếm vai trò..."
+  },
+  "permissions": {
+    "management": "Quản Lý Quyền Hạn",
+    "list": "Danh Sách Quyền Hạn",
+    "name": "Tên",
+    "description": "Mô Tả",
+    "actions": "Hành Động",
+    "noPermissions": "Không tìm thấy quyền hạn nào",
+    "search": "Tìm kiếm quyền hạn..."
+  },
+  "users": {
+    "title": "Quản Lý Người Dùng",
+    "createTitle": "Tạo Người Dùng",
+    "editTitle": "Chỉnh Sửa Người Dùng",
+    "profileTitle": "Hồ Sơ Người Dùng",
+    "createDetails": "Tạo chi tiết người dùng mới",
+    "editDetails": "Chỉnh sửa chi tiết người dùng",
+    "passwordChangeNote": "Để trống các trường mật khẩu nếu bạn không muốn thay đổi",
+    "management": "Quản Lý Người Dùng",
+    "list": "Danh Sách Người Dùng",
+    "create": "Tạo Người Dùng",
+    "edit": "Chỉnh Sửa Người Dùng",
+    "name": "Tên",
+    "email": "Email",
+    "roles": {
+      "title": "Vai Trò Người Dùng",
+      "none": "Không có vai trò nào được gán"
+    },
+    "status": "Trạng Thái",
+    "actions": {
+      "create": "Tạo Người Dùng",
+      "edit": "Chỉnh Sửa",
+      "view": "Xem",
+      "delete": "Xóa",
+      "lock": "Khóa",
+      "unlock": "Mở Khóa",
+      "resetPassword": "Đặt Lại Mật Khẩu"
+    },
+    "addNew": "Thêm Người Dùng Mới",
+    "active": "Hoạt Động",
+    "inactive": "Không Hoạt Động",
+    "blocked": "Bị Chặn",
+    "search": "Tìm kiếm người dùng...",
+    "fields": {
+      "id": "ID",
+      "username": "Tên Đăng Nhập",
+      "email": "Email",
+      "fullName": "Họ Tên",
+      "status": "Trạng Thái",
+      "createdAt": "Ngày Tạo",
+      "lastSignIn": "Đăng Nhập Lần Cuối",
+      "actions": "Hành Động",
+      "password": "Mật Khẩu",
+      "newPassword": "Mật Khẩu Mới",
+      "confirmPassword": "Xác Nhận Mật Khẩu",
+      "roles": "Vai Trò",
+      "superAdmin": "Quản Trị Viên"
+    },
+    "delete": {
+      "title": "Xóa Người Dùng",
+      "confirmation": "Bạn có chắc chắn muốn xóa người dùng này?",
+      "warning": "Hành động này không thể hoàn tác.",
+      "button": {
+        "cancel": "Hủy Bỏ",
+        "confirm": "Xóa Người Dùng",
+        "deleting": "Đang xóa..."
+      }
+    },
+    "modals": {
+      "superAdminTitle": "Quản Trị Viên",
+      "superAdminDescription": "Người dùng này có quyền truy cập đầy đủ vào tất cả các chức năng của hệ thống.",
+      "deleteTitle": "Xóa Người Dùng",
+      "deleteMessage": "Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.",
+      "resetPasswordTitle": "Đặt Lại Mật Khẩu"
+    },
+    "form": {
+      "fullName": "Họ Tên",
+      "namePlaceholder": "Nhập họ tên",
+      "email": "Email",
+      "emailPlaceholder": "Nhập địa chỉ email",
+      "password": "Mật Khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "confirmPassword": "Xác Nhận Mật Khẩu",
+      "confirmPasswordPlaceholder": "Xác nhận mật khẩu của bạn",
+      "selectRoles": "Chọn Vai Trò",
+      "status": "Trạng Thái",
+      "submit": "Lưu Người Dùng",
+      "cancel": "Hủy Bỏ",
+      "saving": "Đang lưu..."
+    },
+    "messages": {
+      "createSuccess": "Người dùng được tạo thành công",
+      "updateSuccess": "Người dùng được cập nhật thành công",
+      "deleteSuccess": "Người dùng được xóa thành công",
+      "lockSuccess": "Khóa người dùng thành công",
+      "unlockSuccess": "Mở khóa người dùng thành công",
+      "passwordResetSuccess": "Đặt lại mật khẩu thành công"
+    },
+    "errors": {
+      "fetchFailed": "Không thể tải danh sách người dùng",
+      "createFailed": "Không thể tạo người dùng",
+      "updateFailed": "Không thể cập nhật người dùng",
+      "deleteFailed": "Không thể xóa người dùng",
+      "passwordResetFailed": "Không thể đặt lại mật khẩu",
+      "usernameExists": "Tên đăng nhập đã được sử dụng",
+      "emailExists": "Email đã được sử dụng"
+    },
+    "noData": "Không tìm thấy người dùng nào",
+    "userNotFound": "Không tìm thấy người dùng",
+    "selectRoles": "Chọn vai trò",
+    "roleSelectionHint": "Giữ phím Ctrl/Cmd để chọn nhiều vai trò",
+    "checkingUsername": "Đang kiểm tra tính khả dụng của tên đăng nhập...",
+    "checkingEmail": "Đang kiểm tra tính khả dụng của email..."
+  },
+  "common": {
+    "save": "Lưu",
+    "cancel": "Hủy Bỏ",
+    "delete": "Xóa",
+    "confirm": "Xác Nhận",
+    "yes": "Có",
+    "no": "Không"
+  },
+  "validation": {
+    "required": "Trường này là bắt buộc",
+    "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ",
+    "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+    "usernameMinLength": "Tên đăng nhập phải có ít nhất 3 ký tự",
+    "usernameMaxLength": "Tên đăng nhập không được vượt quá 50 ký tự",
+    "fullNameMaxLength": "Họ tên không được vượt quá 100 ký tự",
+    "passwordsMustMatch": "Mật khẩu không khớp"
+  },
+  "pagination": {
+    "showing": "Hiển thị",
+    "to": "đến",
+    "of": "trong tổng số",
+    "entries": "kết quả",
+    "previous": "Trước",
+    "next": "Tiếp"
+  }
+}

@@ -3,7 +3,21 @@
     "composite": true,
     "module": "ESNext",
     "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./",
+    "paths": {
+      "@app/*": ["src/*"],
+      "@store/*": ["src/store/*"],
+      "@store": ["src/store/"],
+      "@components": ["src/components/index"],
+      "@modules/*": ["src/modules/*"],
+      "@pages/*": ["src/pages/*"],
+      "@utils/*": ["src/utils/*"],
+      "@services/*": ["src/services/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@styles/*": ["src/styles/*"],
+      "@configs/*": ["src/configs/*"]
+    }
   },
   "include": ["vite.config.ts"]
 }

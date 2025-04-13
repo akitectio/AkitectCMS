@@ -17,9 +17,11 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
 import { Button, Card, Form, Modal } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 const Permissions = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { 
     items: permissions, 
@@ -141,7 +143,7 @@ const Permissions = () => {
   // Handle create permission
   const handleCreatePermission = () => {
     if (!formName || !formDescription) {
-      toast.error('All fields are required');
+      toast.error(t('permissions.form.allFieldsRequired'));
       return;
     }
 
@@ -156,7 +158,7 @@ const Permissions = () => {
     if (!selectedPermission) return;
     
     if (!formName || !formDescription) {
-      toast.error('All fields are required');
+      toast.error(t('permissions.form.allFieldsRequired'));
       return;
     }
 
@@ -182,15 +184,15 @@ const Permissions = () => {
     },
     {
       key: 'name',
-      label: 'Name'
+      label: t('permissions.name')
     },
     {
       key: 'description',
-      label: 'Description'
+      label: t('permissions.description')
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: t('permissions.actions'),
       render: (permission: Permission) => (
         <>
           <Button
@@ -217,7 +219,7 @@ const Permissions = () => {
 
   return (
     <div>
-      <ContentHeader title="Permissions Management" />
+      <ContentHeader title={t('permissions.management')} />
       
       <section className="content">
         <div className="container-fluid">
@@ -227,7 +229,7 @@ const Permissions = () => {
                 <Card.Header>
                   <h3 className="card-title">
                     <FontAwesomeIcon icon={faLock} className="mr-2" />
-                    Permissions List
+                    {t('permissions.list')}
                   </h3>
                   <div className="card-tools">
                     <Button 
@@ -237,7 +239,7 @@ const Permissions = () => {
                       disabled={creating}
                     >
                       <FontAwesomeIcon icon={faPlus} className="mr-1" />
-                      Add New Permission
+                      {t('permissions.addNew')}
                     </Button>
                   </div>
                 </Card.Header>
@@ -253,8 +255,8 @@ const Permissions = () => {
                     onSearch={handleSearch}
                     onPageChange={handlePageChange}
                     onItemsPerPageChange={handleItemsPerPageChange}
-                    searchPlaceholder="Search permissions..."
-                    emptyMessage="No permissions found"
+                    searchPlaceholder={t('permissions.search')}
+                    emptyMessage={t('permissions.noPermissions')}
                   />
                 </Card.Body>
               </Card>
@@ -266,24 +268,24 @@ const Permissions = () => {
       {/* Create Permission Modal */}
       <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Add New Permission</Modal.Title>
+          <Modal.Title>{t('permissions.form.createTitle')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
+              <Form.Label>{t('permissions.name')}</Form.Label>
               <Form.Control 
                 type="text" 
-                placeholder="Enter permission name"
+                placeholder={t('permissions.form.namePlaceholder')}
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
+              <Form.Label>{t('permissions.description')}</Form.Label>
               <Form.Control 
                 type="text" 
-                placeholder="Enter permission description"
+                placeholder={t('permissions.form.descriptionPlaceholder')}
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
               />
@@ -293,7 +295,7 @@ const Permissions = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
-            Cancel
+            {t('permissions.form.cancel')}
           </Button>
           <Button 
             variant="primary" 
@@ -303,9 +305,9 @@ const Permissions = () => {
             {creating ? (
               <>
                 <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                Creating...
+                {t('permissions.form.creating')}
               </>
-            ) : 'Create Permission'}
+            ) : t('permissions.form.create')}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -313,24 +315,24 @@ const Permissions = () => {
       {/* Edit Permission Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Edit Permission</Modal.Title>
+          <Modal.Title>{t('permissions.form.editTitle')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
+              <Form.Label>{t('permissions.name')}</Form.Label>
               <Form.Control 
                 type="text" 
-                placeholder="Enter permission name"
+                placeholder={t('permissions.form.namePlaceholder')}
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
+              <Form.Label>{t('permissions.description')}</Form.Label>
               <Form.Control 
                 type="text" 
-                placeholder="Enter permission description"
+                placeholder={t('permissions.form.descriptionPlaceholder')}
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
               />
@@ -339,7 +341,7 @@ const Permissions = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-            Cancel
+            {t('permissions.form.cancel')}
           </Button>
           <Button 
             variant="info" 
@@ -349,9 +351,9 @@ const Permissions = () => {
             {updating ? (
               <>
                 <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                Updating...
+                {t('permissions.form.updating')}
               </>
-            ) : 'Update Permission'}
+            ) : t('permissions.form.update')}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -359,19 +361,19 @@ const Permissions = () => {
       {/* Delete Permission Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Delete Permission</Modal.Title>
+          <Modal.Title>{t('permissions.delete.title')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Are you sure you want to delete the permission:
+          {t('permissions.delete.confirmation')}
           <strong> {selectedPermission?.name}</strong>?
           <div className="alert alert-warning mt-3">
             <FontAwesomeIcon icon={faLock} className="mr-2" />
-            This action cannot be undone. Deleting a permission might affect users who have this permission assigned.
+            {t('permissions.delete.warning')}
           </div>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancel
+            {t('permissions.delete.button.cancel')}
           </Button>
           <Button 
             variant="danger" 
@@ -381,9 +383,9 @@ const Permissions = () => {
             {deleting ? (
               <>
                 <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                Deleting...
+                {t('permissions.delete.button.deleting')}
               </>
-            ) : 'Delete Permission'}
+            ) : t('permissions.delete.button.confirm')}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -7,6 +7,7 @@ import { authSlice } from '@app/store/reducers/auth';
 import { permissionsSlice } from '@app/store/reducers/permissions';
 import { rolesSlice } from '@app/store/reducers/roles';
 import { uiSlice } from '@app/store/reducers/ui';
+import usersReducer from '@app/store/reducers/users';
 import rootSaga from './sagas';
 
 // Create saga middleware
@@ -18,6 +19,7 @@ const store = configureStore({
     ui: uiSlice.reducer,
     permissions: permissionsSlice.reducer,
     roles: rolesSlice.reducer,
+    users: usersReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false })

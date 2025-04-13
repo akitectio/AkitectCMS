@@ -38,6 +38,20 @@ export const USER_ENDPOINTS = {
   CHANGE_PASSWORD: `${API_PATHS.USERS}/change-password`,
 };
 
+// Admin User Management endpoints
+export const ADMIN_USER_ENDPOINTS = {
+  BASE: API_PATHS.USERS,
+  GET_ALL: `${API_PATHS.USERS}`,
+  GET_BY_ID: (id: string | number) => `${API_PATHS.USERS}/${id}`,
+  CREATE: `${API_PATHS.USERS}`,
+  UPDATE: (id: string | number) => `${API_PATHS.USERS}/${id}`,
+  DELETE: (id: string | number) => `${API_PATHS.USERS}/${id}`,
+  LOCK: (id: string | number) => `${API_PATHS.USERS}/${id}/lock`,
+  UNLOCK: (id: string | number) => `${API_PATHS.USERS}/${id}/unlock`,
+  RESET_PASSWORD: (id: string | number) => `${API_PATHS.USERS}/${id}/reset-password`,
+  TOGGLE_SUPER_ADMIN: (id: string | number) => `${API_PATHS.USERS}/${id}/toggle-super-admin`,
+};
+
 // Permission endpoints
 export const PERMISSION_ENDPOINTS = {
   GET_ALL: API_PATHS.PERMISSIONS,

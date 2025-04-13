@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import {
-    Button,
-    Col,
-    Input,
-    Pagination,
-    // Select, 
-    Row,
-    Table
+  Button,
+  Col,
+  Input,
+  Pagination,
+  // Select, 
+  Row,
+  Table
 } from 'reactstrap';
 import './DataTable.scss';
 
@@ -28,6 +28,11 @@ interface DataTableProps<T> {
   isServerSide?: boolean;
   loading?: boolean;
   emptyMessage?: string;
+  keyField?: string;
+  // Add sorting props
+  onSort?: (field: string) => void;
+  sortField?: string;
+  sortDirection?: string;
 }
 
 const DataTable = <T extends Record<string, any>>({
@@ -43,7 +48,11 @@ const DataTable = <T extends Record<string, any>>({
   currentPage: serverCurrentPage,
   isServerSide = false,
   loading = false,
-  emptyMessage = "No data found"
+  emptyMessage = "No data found",
+  keyField,
+  onSort,
+  sortField,
+  sortDirection
 }: DataTableProps<T>) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [itemsPerPage, setItemsPerPage] = useState<number>(defaultItemsPerPage);
@@ -148,7 +157,18 @@ const DataTable = <T extends Record<string, any>>({
           <thead>
             <tr>
               {columns.map(column => (
-                <th key={column.key}>{column.label}</th>
+                <th 
+                  key={column.key} 
+                  onClick={() => onSort && onSort(column.key)}
+                  style={{ cursor: onSort ? 'pointer' : 'default' }}
+                >
+                  {column.label}
+                  {sortField === column.key && (
+                    <span className="ml-1">
+                      {sortDirection === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </th>
               ))}
             </tr>
           </thead>
@@ -161,7 +181,7 @@ const DataTable = <T extends Record<string, any>>({
               </tr>
             ) : paginatedData.length > 0 ? (
               paginatedData.map((item, index) => (
-                <tr key={index}>
+                <tr key={keyField ? item[keyField] : `row-${index}`}>
                   {columns.map(column => (
                     <td key={column.key}>
                       {column.render ? column.render(item) : item[column.key]}
@@ -209,7 +229,7 @@ const DataTable = <T extends Record<string, any>>({
               
               return (
                 <Button
-                  key={pageNum}
+                  key={`page-${pageNum}`}
                   color={currentPage === pageNum ? "primary" : "secondary"}
                   outline={currentPage !== pageNum}
                   onClick={() => handlePageChange(pageNum)}

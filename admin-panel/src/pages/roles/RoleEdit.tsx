@@ -7,18 +7,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useFormik } from 'formik';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Col, Form, Row } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import * as Yup from 'yup';
 
 // Validation schema using Yup
-const RoleSchema = Yup.object().shape({
+const RoleSchema = (t) => Yup.object().shape({
   name: Yup.string()
-    .min(3, 'Role name must be at least 3 characters')
-    .max(50, 'Role name must be less than 50 characters')
-    .required('Role name is required'),
+    .min(3, t('roles.form.validation.nameTooShort'))
+    .max(50, t('roles.form.validation.nameTooLong'))
+    .required(t('roles.form.validation.nameRequired')),
   description: Yup.string()
-    .max(200, 'Description must be less than 200 characters'),
+    .max(200, t('roles.form.validation.descriptionTooLong')),
   permissionIds: Yup.array()
     .of(Yup.string())
 });
@@ -48,6 +49,7 @@ const groupPermissionsByPrefix = (permissions) => {
 };
 
 const RoleEdit = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -92,7 +94,7 @@ const RoleEdit = () => {
       description: '',
       permissionIds: [] as string[]
     },
-    validationSchema: RoleSchema,
+    validationSchema: RoleSchema(t),
     onSubmit: (values) => {
       if (!id) return;
       
@@ -128,13 +130,13 @@ const RoleEdit = () => {
   // Handle success
   useEffect(() => {
     if (success) {
-      toast.success('Role updated successfully');
+      toast.success(t('roles.messages.updateSuccess'));
       // Navigate to roles list page
       navigate('/roles');
       // Reset state
       dispatch(resetRoleState());
     }
-  }, [success, dispatch, navigate]);
+  }, [success, dispatch, navigate, t]);
 
   // Handle errors
   useEffect(() => {
@@ -247,7 +249,7 @@ const RoleEdit = () => {
 
   return (
     <div>
-      <ContentHeader title="Edit Role" />
+      <ContentHeader title={t('roles.edit')} />
       
       <section className="content">
         <div className="container-fluid">
@@ -255,7 +257,7 @@ const RoleEdit = () => {
             <div className="col-12">
               <Card>
                 <Card.Header>
-                  <h3 className="card-title">Role Details</h3>
+                  <h3 className="card-title">{t('roles.form.title')}</h3>
                   <div className="card-tools">
                     <Button 
                       variant="secondary" 
@@ -263,7 +265,7 @@ const RoleEdit = () => {
                       onClick={() => navigate('/roles')}
                     >
                       <FontAwesomeIcon icon={faArrowLeft} className="mr-1" />
-                      Back to List
+                      {t('roles.form.backToList')}
                     </Button>
                   </div>
                 </Card.Header>
@@ -272,11 +274,11 @@ const RoleEdit = () => {
                     <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
-                          <Form.Label>Name</Form.Label>
+                          <Form.Label>{t('roles.form.name')}</Form.Label>
                           <Form.Control 
                             type="text"
                             name="name"
-                            placeholder="Enter role name"
+                            placeholder={t('roles.form.namePlaceholder')}
                             value={formik.values.name}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
@@ -289,11 +291,11 @@ const RoleEdit = () => {
                       </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3">
-                          <Form.Label>Description</Form.Label>
+                          <Form.Label>{t('roles.form.description')}</Form.Label>
                           <Form.Control 
                             type="text"
                             name="description"
-                            placeholder="Enter role description"
+                            placeholder={t('roles.form.descriptionPlaceholder')}
                             value={formik.values.description}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
@@ -308,7 +310,7 @@ const RoleEdit = () => {
                     
                     <Form.Group className="mb-3">
                       <div className="d-flex justify-content-between align-items-center mb-2">
-                        <Form.Label className="mb-0">Permissions</Form.Label>
+                        <Form.Label className="mb-0">{t('roles.form.selectPermissions')}</Form.Label>
                         <div>
                           <Button
                             variant="outline-primary"
@@ -318,7 +320,7 @@ const RoleEdit = () => {
                             disabled={areAllPermissionsSelected}
                           >
                             <FontAwesomeIcon icon={faCheck} className="mr-1" />
-                            Check All
+                            {t('roles.form.checkAll')}
                           </Button>
                           <Button
                             variant="outline-secondary"
@@ -327,7 +329,7 @@ const RoleEdit = () => {
                             disabled={formik.values.permissionIds.length === 0}
                           >
                             <FontAwesomeIcon icon={faSquare} className="mr-1" />
-                            Uncheck All
+                            {t('roles.form.uncheckAll')}
                           </Button>
                         </div>
                       </div>
@@ -391,7 +393,7 @@ const RoleEdit = () => {
                         className="mr-2"
                         onClick={() => navigate('/roles')}
                       >
-                        Cancel
+                        {t('roles.form.cancel')}
                       </Button>
                       <Button 
                         variant="primary" 
@@ -401,12 +403,12 @@ const RoleEdit = () => {
                         {updating ? (
                           <>
                             <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                            Updating...
+                            {t('roles.form.saving')}
                           </>
                         ) : (
                           <>
                             <FontAwesomeIcon icon={faSave} className="mr-1" />
-                            Update Role
+                            {t('roles.form.submit')}
                           </>
                         )}
                       </Button>

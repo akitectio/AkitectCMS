@@ -12,10 +12,12 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
 import { Button, Card, Modal } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const Roles = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { 
     items: roles, 
@@ -90,7 +92,7 @@ const Roles = () => {
   // Get permission name by id
   const getPermissionName = (permissionId: string) => {
     const permission = permissions?.find(p => p.id === permissionId);
-    return permission ? permission.name : 'Unknown Permission';
+    return permission ? permission.name : t('permissions.noPermissions');
   };
 
   // Handle delete role
@@ -143,15 +145,15 @@ const Roles = () => {
     },
     {
       key: 'name',
-      label: 'Name'
+      label: t('roles.name')
     },
     {
       key: 'description',
-      label: 'Description'
+      label: t('roles.description')
     },
     {
       key: 'permissions',
-      label: 'Permissions',
+      label: t('roles.permissions'),
       render: (role) => (
         <div 
           onClick={() => handleOpenPermissionsModal(role)} 
@@ -160,7 +162,7 @@ const Roles = () => {
             color: role.permissionIds?.length > 0 ? '#007bff' : 'inherit'
           }}
         >
-          {role.permissionIds?.length || 0} permissions
+          {t('roles.permissionsCount', { count: role.permissionIds?.length || 0 })}
           {role.permissionIds?.length > 0 && (
             <FontAwesomeIcon icon={faEye} className="ml-1" />
           )}
@@ -169,7 +171,7 @@ const Roles = () => {
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: t('roles.actions'),
       render: (role) => (
         <>
           <Link to={`/roles/${role.id}/edit`}>
@@ -196,7 +198,7 @@ const Roles = () => {
 
   return (
     <div>
-      <ContentHeader title="Roles Management" />
+      <ContentHeader title={t('roles.management')} />
       
       <section className="content">
         <div className="container-fluid">
@@ -206,7 +208,7 @@ const Roles = () => {
                 <Card.Header>
                   <h3 className="card-title">
                     <FontAwesomeIcon icon={faShieldHalved} className="mr-2" />
-                    Roles List
+                    {t('roles.list')}
                   </h3>
                   <div className="card-tools">
                     <Link to="/roles/create">
@@ -215,7 +217,7 @@ const Roles = () => {
                         size="sm"
                       >
                         <FontAwesomeIcon icon={faPlus} className="mr-1" />
-                        Add New Role
+                        {t('roles.addNew')}
                       </Button>
                     </Link>
                   </div>
@@ -232,8 +234,8 @@ const Roles = () => {
                     onSearch={handleSearch}
                     onPageChange={handlePageChange}
                     onItemsPerPageChange={handleItemsPerPageChange}
-                    searchPlaceholder="Search roles..."
-                    emptyMessage="No roles found"
+                    searchPlaceholder={t('roles.search')}
+                    emptyMessage={t('roles.noRoles')}
                   />
                 </Card.Body>
               </Card>
@@ -245,18 +247,18 @@ const Roles = () => {
       {/* Delete Role Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Delete Role</Modal.Title>
+          <Modal.Title>{t('roles.delete.title')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Are you sure you want to delete this role?
+          {t('roles.delete.confirmation')}
           <div className="alert alert-warning mt-3">
             <FontAwesomeIcon icon={faShieldHalved} className="mr-2" />
-            This action cannot be undone. Deleting a role will remove it from all users who have it assigned.
+            {t('roles.delete.warning')}
           </div>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancel
+            {t('roles.delete.button.cancel')}
           </Button>
           <Button 
             variant="danger" 
@@ -266,9 +268,9 @@ const Roles = () => {
             {deleting ? (
               <>
                 <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                Deleting...
+                {t('roles.delete.button.deleting')}
               </>
-            ) : 'Delete Role'}
+            ) : t('roles.delete.button.confirm')}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -282,7 +284,7 @@ const Roles = () => {
         <Modal.Header closeButton>
           <Modal.Title>
             <FontAwesomeIcon icon={faShieldHalved} className="mr-2" />
-            Permissions for {selectedRoleName}
+            {t('roles.permissionsModal.title', { name: selectedRoleName })}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -300,7 +302,7 @@ const Roles = () => {
                     <thead>
                       <tr>
                         <th>#</th>
-                        <th>Permission Name</th>
+                        <th>{t('roles.permissionsModal.permissionName')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -315,7 +317,7 @@ const Roles = () => {
                 </div>
               ) : (
                 <div className="alert alert-info">
-                  No permissions assigned to this role.
+                  {t('roles.permissionsModal.noPermissions')}
                 </div>
               )}
             </>
@@ -323,7 +325,7 @@ const Roles = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowPermissionsModal(false)}>
-            Close
+            {t('roles.permissionsModal.close')}
           </Button>
         </Modal.Footer>
       </Modal>

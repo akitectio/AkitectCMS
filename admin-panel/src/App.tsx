@@ -10,14 +10,15 @@ import ReactGA from 'react-ga4';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 
+import Permissions from '@app/pages/permissions/Permissions';
+import RoleCreate from '@app/pages/roles/RoleCreate';
+import RoleEdit from '@app/pages/roles/RoleEdit';
+import Roles from '@app/pages/roles/Roles';
+import { UserForm, UserProfile, Users } from '@app/pages/users';
 import Blank from '@pages/Blank';
 import Dashboard from '@pages/Dashboard';
-import Permissions from '@pages/Permissions';
-import RoleCreate from '@pages/RoleCreate';
-import RoleEdit from '@pages/RoleEdit';
-import Roles from '@pages/Roles';
-import SubMenu from '@pages/SubMenu';
 import Profile from '@pages/profile/Profile';
+import SubMenu from '@pages/SubMenu';
 
 import PrivateRoute from './routes/PrivateRoute';
 import PublicRoute from './routes/PublicRoute';
@@ -107,6 +108,10 @@ const App = () => {
             <Route path="/roles" element={<Roles />} />
             <Route path="/roles/create" element={<RoleCreate />} />
             <Route path="/roles/:id/edit" element={<RoleEdit />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/users/create" element={<UserForm />} />
+            <Route path="/users/edit/:id" element={<UserForm />} />
+            <Route path="/users/profile/:id" element={<UserProfile />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/" element={<Dashboard />} />
