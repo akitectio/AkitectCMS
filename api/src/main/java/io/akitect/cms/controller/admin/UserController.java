@@ -288,6 +288,23 @@ public class UserController extends AdminBaseController {
         return ResponseEntity.ok(convertUserToDTO(user));
     }
 
+    @PutMapping("/{id}/toggle-super-admin")
+    public ResponseEntity<?> toggleSuperAdmin(@PathVariable UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Toggle the superAdmin status
+        user.setSuperAdmin(!user.isSuperAdmin());
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", user.getId());
+        response.put("superAdmin", user.isSuperAdmin());
+
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * Check if a username or email is already taken
      * 
