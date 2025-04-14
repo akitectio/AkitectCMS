@@ -6,7 +6,7 @@ import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
  * Centralized API management for the entire project
  */
 class ApiService {
-  private api: AxiosInstance;
+  private readonly api: AxiosInstance;
 
   constructor() {
     this.api = axiosInstance;
@@ -30,7 +30,7 @@ class ApiService {
         
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error instanceof Error ? error : new Error(String(error)))
     );
 
     // Response interceptor
@@ -68,7 +68,7 @@ class ApiService {
           }
         }
         
-        return Promise.reject(error);
+        return Promise.reject(error instanceof Error ? error : new Error(String(error)));
       }
     );
   }

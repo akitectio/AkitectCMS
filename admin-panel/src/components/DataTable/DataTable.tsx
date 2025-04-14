@@ -36,7 +36,7 @@ interface DataTableProps<T> {
 }
 
 const DataTable = <T extends Record<string, any>>({
-  data,
+  data = [], // Default value to prevent undefined errors
   columns,
   defaultItemsPerPage = 10,
   itemsPerPageOptions = [5, 10, 20, 50, 100],

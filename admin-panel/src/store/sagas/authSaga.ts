@@ -24,7 +24,7 @@ export function* handleLogin(action: ReturnType<typeof loginRequest>): Generator
     // Extract proper error message from response
     let errorMessage = 'Login failed';
     
-    if (error.response && error.response.data) {
+    if (error.response?.data) {
       // Extract message from the API error response format
       const { message } = error.response.data;
       if (message) {

@@ -25,7 +25,7 @@ import {
     updateRoleRequest,
     updateRoleSuccess
 } from '@app/store/reducers/roles';
-import { Role } from '@app/types/user';
+import { Role } from '../../types/role';
 
 // Fetch roles list
 export function* handleFetchRoles(

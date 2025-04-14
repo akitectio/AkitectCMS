@@ -23,7 +23,8 @@ export default ({ mode }) => {
         '@services': path.resolve(__dirname, './src/services'),
         '@hooks': path.resolve(__dirname, './src/hooks'),
         '@styles': path.resolve(__dirname, './src/styles'),
-        '@configs': path.resolve(__dirname, './src/configs')
+        '@configs': path.resolve(__dirname, './src/configs'),
+        '@aki_types': path.resolve(__dirname, './src/types')
       },
     },
   });

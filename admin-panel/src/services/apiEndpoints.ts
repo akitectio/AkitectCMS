@@ -58,6 +58,7 @@ export const ADMIN_USER_ENDPOINTS = {
 // Permission endpoints
 export const PERMISSION_ENDPOINTS = {
   GET_ALL: API_PATHS.PERMISSIONS,
+  GET_ALL_TREE: `${API_PATHS.PERMISSIONS}/tree`, // Get all permissions as a tree structure without pagination
   GET_BY_ID: (id: string | number) => `${API_PATHS.PERMISSIONS}/${id}`,
   CREATE: API_PATHS.PERMISSIONS,
   UPDATE: (id: string | number) => `${API_PATHS.PERMISSIONS}/${id}`,
@@ -68,6 +69,7 @@ export const PERMISSION_ENDPOINTS = {
 // Role endpoints
 export const ROLE_ENDPOINTS = {
   GET_ALL: API_PATHS.ROLES,
+  GET_ALL_TREE: `${API_PATHS.ROLES}/tree`, // Get all roles as a tree structure without pagination
   GET_BY_ID: (id: string | number) => `${API_PATHS.ROLES}/${id}`,
   CREATE: API_PATHS.ROLES,
   UPDATE: (id: string | number) => `${API_PATHS.ROLES}/${id}`,
@@ -91,9 +93,10 @@ export const POST_ENDPOINTS = {
 
 // Category endpoints
 export const CATEGORY_ENDPOINTS = {
-  GET_ALL: API_PATHS.CATEGORIES,
+  GET_ALL: `${API_PATHS.CATEGORIES}`,
+  GET_ALL_TREE: `${API_PATHS.CATEGORIES}/tree`, // Get all categories as a tree structure without pagination
   GET_BY_ID: (id: string | number) => `${API_PATHS.CATEGORIES}/${id}`,
-  CREATE: API_PATHS.CATEGORIES,
+  CREATE: `${API_PATHS.CATEGORIES}`,
   UPDATE: (id: string | number) => `${API_PATHS.CATEGORIES}/${id}`,
   DELETE: (id: string | number) => `${API_PATHS.CATEGORIES}/${id}`,
 };

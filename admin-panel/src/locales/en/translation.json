@@ -256,6 +256,65 @@
     "checkingUsername": "Checking username availability...",
     "checkingEmail": "Checking email availability..."
   },
+  "categories": {
+    "title": "Category Management",
+    "listTitle": "Categories List",
+    "addButton": "Add Category",
+    "createTitle": "Create Category",
+    "editTitle": "Edit Category: {{name}}",
+    "fields": {
+      "name": "Name",
+      "slug": "Slug",
+      "description": "Description",
+      "parentCategory": "Parent Category",
+      "featured": "Featured",
+      "postCount": "Post Count",
+      "createdAt": "Created At"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "form": {
+      "name": "Category Name",
+      "namePlaceholder": "Enter category name",
+      "slug": "Slug",
+      "slugPlaceholder": "Enter category slug (or leave empty to generate from name)",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter category description",
+      "parentCategory": "Parent Category (Optional)",
+      "selectParentCategory": "Select parent category",
+      "featured": "Featured Category",
+      "seoSection": "SEO Settings",
+      "metaTitle": "Meta Title",
+      "metaTitlePlaceholder": "Enter meta title (for SEO)",
+      "metaDescription": "Meta Description",
+      "metaDescriptionPlaceholder": "Enter meta description (for SEO)",
+      "noParent": "No Parent (Top Level)"
+    },
+    "messages": {
+      "createSuccess": "Category created successfully",
+      "updateSuccess": "Category updated successfully",
+      "deleteSuccess": "Category deleted successfully"
+    },
+    "errors": {
+      "fetchFailed": "Failed to fetch categories",
+      "createFailed": "Failed to create category",
+      "updateFailed": "Failed to update category",
+      "deleteFailed": "Failed to delete category",
+      "slugExists": "A category with this slug already exists",
+      "categoryNotFound": "Category not found"
+    },
+    "modals": {
+      "deleteTitle": "Delete Category",
+      "deleteMessage": "Are you sure you want to delete the category \"{{name}}\"?"
+    },
+    "noCategories": "No categories found",
+    "validation": {
+      "nameRequired": "Category name is required",
+      "slugFormat": "Slug can only contain lowercase letters, numbers, and hyphens"
+    }
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",

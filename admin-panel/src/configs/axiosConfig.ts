@@ -14,7 +14,7 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem('token');
     
     // Check if the request is for the login endpoint
-    const isLoginRequest = config.url && config.url.includes('/auth/login');
+    const isLoginRequest = config.url?.includes('/auth/login');
     
     // Add token to authorization header for all requests except login
     if (token && config.headers && !isLoginRequest) {
@@ -24,7 +24,7 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
-    return Promise.reject(error);
+    return Promise.reject(error instanceof Error ? error : new Error(error?.message || 'Unknown error'));
   }
 );
 
@@ -46,7 +46,7 @@ axiosInstance.interceptors.response.use(
     }
     
     // Handle other errors
-    return Promise.reject(error);
+    return Promise.reject(error instanceof Error ? error : new Error(error?.message || 'Unknown error'));
   }
 );
 

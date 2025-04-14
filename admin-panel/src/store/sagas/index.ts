@@ -1,5 +1,6 @@
 import { all, fork } from 'redux-saga/effects';
 import { watchAuthSagas } from './authSaga';
+import categorySaga from './categorySaga';
 import { watchPermissionsSagas } from './permissionsSaga';
 import { watchRolesSagas } from './rolesSaga';
 import usersSaga from './users';
@@ -11,6 +12,7 @@ export default function* rootSaga(): Generator<any, void, any> {
     fork(watchPermissionsSagas),
     fork(watchRolesSagas),
     fork(usersSaga),
+    fork(categorySaga),
     // Add other sagas here
   ]);
 }
