@@ -1,0 +1,68 @@
+// Bootstrap compatibility layer
+// This file provides compatibility with Bootstrap SASS variables and functions
+// while transitioning to Ant Design
+
+// Define theme colors to match our Ant Design theme
+$theme-colors: (
+  "primary": #007bff,
+  "secondary": #6c757d,
+  "success": #52c41a,
+  "info": #1890ff,
+  "warning": #faad14,
+  "danger": #ff4d4f,
+  "light": #f8f9fa,
+  "dark": #343a40
+);
+
+// Define the theme-color function
+@function theme-color($key) {
+  @return map-get($theme-colors, $key);
+}
+
+// Define color-yiq function (simplified version)
+@function color-yiq($color) {
+  $r: red($color);
+  $g: green($color);
+  $b: blue($color);
+  
+  $yiq: (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+  
+  @if ($yiq >= 150) {
+    @return #111111;
+  } @else {
+    @return #ffffff;
+  }
+}
+
+// Common Bootstrap variables
+$white: #fff;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d;
+$gray-700: #495057;
+$gray-800: #343a40;
+$gray-900: #212529;
+$black: #000;
+
+// Colors map
+$colors: (
+  "blue": #007bff,
+  "indigo": #6610f2,
+  "purple": #6f42c1,
+  "pink": #e83e8c,
+  "red": #dc3545,
+  "orange": #fd7e14,
+  "yellow": #ffc107,
+  "green": #28a745,
+  "teal": #20c997,
+  "cyan": #17a2b8,
+  "white": #fff,
+  "gray": #6c757d,
+  "gray-dark": #343a40
+);
+
+// Link color
+$link-color: theme-color("primary");

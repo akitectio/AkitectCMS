@@ -1,14 +1,7 @@
+import { SearchOutlined } from '@ant-design/icons';
+import { Input, Select, Space, Table } from 'antd';
 import React, { useState } from 'react';
-import {
-  Button,
-  Col,
-  Input,
-  Pagination,
-  // Select, 
-  Row,
-  Table
-} from 'reactstrap';
-import './DataTable.scss';
+import styled from 'styled-components';
 
 interface DataTableProps<T> {
   data: T[];
@@ -29,14 +22,39 @@ interface DataTableProps<T> {
   loading?: boolean;
   emptyMessage?: string;
   keyField?: string;
-  // Add sorting props
   onSort?: (field: string) => void;
   sortField?: string;
   sortDirection?: string;
 }
 
+const { Option } = Select;
+
+const TableContainer = styled.div`
+  .ant-table-wrapper {
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .ant-table-thead > tr > th {
+    background: #f5f5f5;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.85);
+  }
+  
+  .ant-pagination {
+    margin-top: 16px;
+  }
+  
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+`;
+
 const DataTable = <T extends Record<string, any>>({
-  data = [], // Default value to prevent undefined errors
+  data = [],
   columns,
   defaultItemsPerPage = 10,
   itemsPerPageOptions = [5, 10, 20, 50, 100],
@@ -56,10 +74,10 @@ const DataTable = <T extends Record<string, any>>({
 }: DataTableProps<T>) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [itemsPerPage, setItemsPerPage] = useState<number>(defaultItemsPerPage);
-  const [localCurrentPage, setLocalCurrentPage] = useState<number>(0);
+  const [localCurrentPage, setLocalCurrentPage] = useState<number>(1); // Ant Design pagination is 1-based
   
   // Use server-side pagination if provided, otherwise use client-side
-  const currentPage = isServerSide ? (serverCurrentPage || 0) : localCurrentPage;
+  const currentPage = isServerSide ? (serverCurrentPage || 1) : localCurrentPage;
 
   // Filter data locally if not using server-side filtering
   const filteredData = isServerSide 
@@ -73,15 +91,15 @@ const DataTable = <T extends Record<string, any>>({
 
   // Calculate pagination for client-side
   const calculatedTotalItems = isServerSide ? (totalItems || 0) : filteredData.length;
-  const totalPages = Math.ceil(calculatedTotalItems / itemsPerPage);
   
-  // Get paginated data for client-side
-  const paginatedData = isServerSide 
-    ? data 
-    : filteredData.slice(
-        currentPage * itemsPerPage,
-        (currentPage + 1) * itemsPerPage
-      );
+  // Convert columns format for Ant Design Table
+  const antColumns = columns.map(column => ({
+    title: column.label,
+    dataIndex: column.key,
+    key: column.key,
+    render: column.render ? (text: any, record: T) => column.render!(record) : undefined,
+    sorter: onSort ? true : false,
+  }));
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,163 +112,88 @@ const DataTable = <T extends Record<string, any>>({
     
     // Reset to first page when searching
     if (!isServerSide) {
-      setLocalCurrentPage(0);
+      setLocalCurrentPage(1);
     }
   };
 
   // Handle items per page change
-  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newItemsPerPage = parseInt(e.target.value);
-    setItemsPerPage(newItemsPerPage);
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
     
     if (isServerSide && onItemsPerPageChange) {
-      onItemsPerPageChange(newItemsPerPage);
+      onItemsPerPageChange(value);
     }
     
     // Reset to first page when changing items per page
     if (!isServerSide) {
-      setLocalCurrentPage(0);
+      setLocalCurrentPage(1);
     }
   };
 
   // Handle page change
   const handlePageChange = (page: number) => {
     if (isServerSide && onPageChange) {
-      onPageChange(page);
+      onPageChange(page - 1); // Convert to 0-based for API
     } else {
       setLocalCurrentPage(page);
     }
   };
 
+  // Handle table sort
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    if (onSort && sorter.field) {
+      onSort(sorter.field);
+    }
+  };
+
   return (
-    <div className="data-table">
-      <Row className="mb-3">
-        <Col md={6}>
-          <Input
-            type="text"
-            placeholder={searchPlaceholder}
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="data-table-search"
-          />
-        </Col>
-        <Col md={6} className="text-right">
-          <div className="d-flex justify-content-end align-items-center">
-            <span className="mr-2">Items per page:</span>
-            <select
-              value={itemsPerPage.toString()}
-              onChange={handleItemsPerPageChange}
-              className="data-table-select form-control"
-            >
-              {itemsPerPageOptions.map(option => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-        </Col>
-      </Row>
-
-      <div className="table-responsive">
-        <Table hover bordered striped>
-          <thead>
-            <tr>
-              {columns.map(column => (
-                <th 
-                  key={column.key} 
-                  onClick={() => onSort && onSort(column.key)}
-                  style={{ cursor: onSort ? 'pointer' : 'default' }}
-                >
-                  {column.label}
-                  {sortField === column.key && (
-                    <span className="ml-1">
-                      {sortDirection === 'asc' ? '↑' : '↓'}
-                    </span>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={columns.length} className="text-center">
-                  Loading...
-                </td>
-              </tr>
-            ) : paginatedData.length > 0 ? (
-              paginatedData.map((item, index) => (
-                <tr key={keyField ? item[keyField] : `row-${index}`}>
-                  {columns.map(column => (
-                    <td key={column.key}>
-                      {column.render ? column.render(item) : item[column.key]}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={columns.length} className="text-center">
-                  {emptyMessage}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </Table>
+    <TableContainer>
+      <div className="table-header">
+        <Input
+          placeholder={searchPlaceholder}
+          value={searchQuery}
+          onChange={handleSearchChange}
+          style={{ width: 250 }}
+          prefix={<SearchOutlined />}
+          allowClear
+        />
+        
+        <Space>
+          <span>Items per page:</span>
+          <Select
+            value={itemsPerPage}
+            onChange={handleItemsPerPageChange}
+            style={{ width: 80 }}
+          >
+            {itemsPerPageOptions.map(option => (
+              <Option key={option} value={option}>{option}</Option>
+            ))}
+          </Select>
+        </Space>
       </div>
-
-      {totalPages > 0 && (
-        <div className="d-flex justify-content-between align-items-center mt-3">
-          <div>
-            Showing {currentPage * itemsPerPage + 1} to {Math.min((currentPage + 1) * itemsPerPage, calculatedTotalItems)} of {calculatedTotalItems} entries
-          </div>
-          <Pagination>
-            <Button
-              color="primary"
-              outline
-              onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
-              disabled={currentPage === 0}
-            >
-              Previous
-            </Button>
-            {[...Array(Math.min(5, totalPages))].map((_, i) => {
-              // Calculate the page numbers to show (centered around current page)
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i;
-              } else if (currentPage < 3) {
-                pageNum = i;
-              } else if (currentPage > totalPages - 3) {
-                pageNum = totalPages - 5 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-              
-              return (
-                <Button
-                  key={`page-${pageNum}`}
-                  color={currentPage === pageNum ? "primary" : "secondary"}
-                  outline={currentPage !== pageNum}
-                  onClick={() => handlePageChange(pageNum)}
-                  className="mx-1"
-                >
-                  {pageNum + 1}
-                </Button>
-              );
-            })}
-            <Button
-              color="primary"
-              outline
-              onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))}
-              disabled={currentPage === totalPages - 1}
-            >
-              Next
-            </Button>
-          </Pagination>
-        </div>
-      )}
-    </div>
+      
+      <Table
+        dataSource={isServerSide ? data : filteredData.slice(
+          (currentPage - 1) * itemsPerPage,
+          currentPage * itemsPerPage
+        )}
+        columns={antColumns}
+        rowKey={keyField || 'id'}
+        loading={loading}
+        pagination={{
+          current: currentPage,
+          pageSize: itemsPerPage,
+          total: calculatedTotalItems,
+          showSizeChanger: false, // We're using our custom size changer
+          onChange: handlePageChange,
+          showTotal: (total) => `Total ${total} items`,
+        }}
+        onChange={handleTableChange}
+        locale={{
+          emptyText: emptyMessage
+        }}
+      />
+    </TableContainer>
   );
 };
 

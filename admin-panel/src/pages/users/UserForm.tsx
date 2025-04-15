@@ -1,19 +1,29 @@
+import { LoadingOutlined, SaveOutlined } from '@ant-design/icons';
 import ContentHeader from '@app/components/content-header/ContentHeader';
-import { OverlayLoading } from '@app/components/OverlayLoading';
 import { getAllRoles } from '@app/services/roles';
 import userService from '@app/services/users';
 import { Role, UserCreateRequest, UserUpdateRequest } from '@app/types/user';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Formik } from 'formik';
+import {
+    Button,
+    Card,
+    Checkbox,
+    Col,
+    Form,
+    Input,
+    Row,
+    Select,
+    Spin,
+    Typography
+} from 'antd';
 import debounce from 'lodash/debounce';
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import Select from 'react-select';
 import { toast } from 'react-toastify';
 import * as Yup from 'yup';
+
+const { Text } = Typography;
+const { Option } = Select;
 
 interface SelectOption {
   value: string;
@@ -25,6 +35,7 @@ const UserForm = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
+  const [form] = Form.useForm();
   
   const [loading, setLoading] = useState<boolean>(false);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -78,8 +89,13 @@ const UserForm = () => {
       .max(100, t('validation.fullNameMaxLength'))
       .required(t('validation.required')),
     roleIds: Yup.array()
-      .min(1, t('validation.atLeastOneRole'))
-      .required(t('validation.required')),
+      .when('superAdmin', {
+        is: false,
+        then: Yup.array()
+          .min(1, t('validation.atLeastOneRole'))
+          .required(t('validation.required')),
+        otherwise: Yup.array()
+      })
   });
   
   // Debounced function to check username availability
@@ -185,6 +201,15 @@ const UserForm = () => {
             roleIds: userRoleIds,
             superAdmin: user.superAdmin || false,
           });
+          
+          // Set form values after fetching
+          form.setFieldsValue({
+            username: user.username || '',
+            email: user.email || '',
+            fullName: user.fullName || user.name || '',
+            roleIds: userRoleIds,
+            superAdmin: user.superAdmin || false,
+          });
         } catch (error) {
           console.error('Error fetching user:', error);
           toast.error(t('users.errors.fetchFailed'));
@@ -196,7 +221,7 @@ const UserForm = () => {
     };
     
     fetchUser();
-  }, [isEditMode, id, navigate, t]);
+  }, [isEditMode, id, navigate, t, form]);
   
   // Use effect to debug role values and selected options
   useEffect(() => {
@@ -211,6 +236,17 @@ const UserForm = () => {
       console.log('Matched roles for display:', matchedRoles);
     }
   }, [isEditMode, initialValues.roleIds, roleOptions]);
+
+  // Custom validation for roleIds based on superAdmin status
+  const validateRoleIds = (_, value) => {
+    const superAdmin = form.getFieldValue('superAdmin');
+    
+    if (!superAdmin && (!value || value.length === 0)) {
+      return Promise.reject(new Error(t('validation.atLeastOneRole')));
+    }
+    
+    return Promise.resolve();
+  };
 
   // Handle form submission
   const handleSubmit = async (values: any) => {
@@ -238,13 +274,23 @@ const UserForm = () => {
         }
       }
       
+      // Ensure roleIds is an array, even if empty
+      const roleIds = values.roleIds || [];
+      
+      // Validate role selection if not superAdmin
+      if (!values.superAdmin && roleIds.length === 0) {
+        toast.error(t('validation.atLeastOneRole'));
+        setLoading(false);
+        return;
+      }
+      
       if (isEditMode && id) {
         // Update existing user
         const updateData: UserUpdateRequest = {
           username: values.username,
           email: values.email,
           fullName: values.fullName,
-          roleIds: values.roleIds,
+          roleIds: roleIds,
           superAdmin: values.superAdmin,
         };
         
@@ -258,7 +304,7 @@ const UserForm = () => {
           email: values.email,
           password: values.password,
           fullName: values.fullName,
-          roleIds: values.roleIds,
+          roleIds: roleIds,
           superAdmin: values.superAdmin,
         };
         
@@ -300,260 +346,209 @@ const UserForm = () => {
         title={isEditMode ? t('users.editTitle') : t('users.createTitle')}
       />
       
-      <section className="content">
-        <div className="container-fluid">
-          <Formik
+      <div style={{ padding: '24px 16px' }}>
+        <Card
+          title={isEditMode ? t('users.editDetails') : t('users.createDetails')}
+        >
+          {loading && (
+            <div style={{ 
+              position: 'absolute', 
+              top: 0,
+              left: 0, 
+              width: '100%', 
+              height: '100%', 
+              background: 'rgba(255, 255, 255, 0.7)', 
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000
+            }}>
+              <Spin size="large" />
+            </div>
+          )}
+          
+          <Form
+            form={form}
+            layout="vertical"
             initialValues={initialValues}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-            enableReinitialize
+            onFinish={handleSubmit}
           >
-            {({
-              handleSubmit,
-              handleChange,
-              handleBlur,
-              values,
-              touched,
-              errors,
-              isValid,
-              dirty,
-              setFieldValue,
-              setFieldError,
-              setFieldTouched,
-            }) => (
-              <Form noValidate onSubmit={handleSubmit}>
-                <Card>
-                  <Card.Header>
-                    <h3 className="card-title">
-                      {isEditMode ? t('users.editDetails') : t('users.createDetails')}
-                    </h3>
-                  </Card.Header>
-                  
-                  <Card.Body>
-                    <div className="position-relative">
-                      <Row>
-                        <Col md={6}>
-                          <Form.Group>
-                            <Form.Label htmlFor="username">
-                              {t('users.fields.username')} <span className="text-danger">*</span>
-                            </Form.Label>
-                            <Form.Control
-                              id="username"
-                              name="username"
-                              value={values.username}
-                              onChange={(e) => {
-                                handleChange(e);
-                                setUsernameError(null); // Clear previous error
-                                if (e.target.value.length >= 3) {
-                                  checkUsernameAvailability(e.target.value, setFieldError);
-                                }
-                              }}
-                              onBlur={handleBlur}
-                              isInvalid={(touched.username && !!errors.username) || !!usernameError}
-                            />
-                            {checkingUsername && (
-                              <div className="text-info small mt-1">
-                                <i className="fas fa-spinner fa-spin mr-1"></i>
-                                {t('users.checkingUsername')}
-                              </div>
-                            )}
-                            <Form.Control.Feedback type="invalid">
-                              {usernameError || errors.username}
-                            </Form.Control.Feedback>
-                          </Form.Group>
-                        </Col>
-                        
-                        <Col md={6}>
-                          <Form.Group>
-                            <Form.Label htmlFor="email">
-                              {t('users.fields.email')} <span className="text-danger">*</span>
-                            </Form.Label>
-                            <Form.Control
-                              id="email"
-                              name="email"
-                              type="email"
-                              value={values.email}
-                              onChange={(e) => {
-                                handleChange(e);
-                                setEmailError(null); // Clear previous error
-                                if (e.target.value.includes('@')) {
-                                  checkEmailAvailability(e.target.value, setFieldError);
-                                }
-                              }}
-                              onBlur={handleBlur}
-                              isInvalid={(touched.email && !!errors.email) || !!emailError}
-                            />
-                            {checkingEmail && (
-                              <div className="text-info small mt-1">
-                                <i className="fas fa-spinner fa-spin mr-1"></i>
-                                {t('users.checkingEmail')}
-                              </div>
-                            )}
-                            <Form.Control.Feedback type="invalid">
-                              {emailError || errors.email}
-                            </Form.Control.Feedback>
-                          </Form.Group>
-                        </Col>
-                      </Row>
-                      
-                      <Row>
-                        <Col md={6}>
-                          <Form.Group>
-                            <Form.Label htmlFor="fullName">
-                              {t('users.fields.fullName')} <span className="text-danger">*</span>
-                            </Form.Label>
-                            <Form.Control
-                              id="fullName"
-                              name="fullName"
-                              value={values.fullName}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              isInvalid={touched.fullName && !!errors.fullName}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                              {errors.fullName}
-                            </Form.Control.Feedback>
-                          </Form.Group>
-                        </Col>
-                        
-                        <Col md={6}>
-                          <Form.Group>
-                            <Form.Label htmlFor="roleIds">
-                              {t('users.fields.roles')} <span className="text-danger">*</span>
-                            </Form.Label>
-                            <Select
-                              id="roleIds"
-                              name="roleIds"
-                              isMulti
-                              options={roleOptions}
-                              className={touched.roleIds && !!errors.roleIds ? 'is-invalid' : ''}
-                              placeholder={t('users.selectRoles')}
-                              isLoading={fetchingRoles}
-                              isDisabled={fetchingRoles}
-                              value={roleOptions.filter(option => 
-                                values.roleIds && values.roleIds.includes(option.value)
-                              )}
-                              onChange={(selectedOptions: any) => {
-                                const selectedRoleIds = selectedOptions 
-                                  ? selectedOptions.map((option: any) => option.value) 
-                                  : [];
-                                setFieldValue('roleIds', selectedRoleIds);
-                              }}
-                              onBlur={() => setFieldTouched('roleIds', true)}
-                              menuPortalTarget={document.body} 
-                              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                            />
-                            <Form.Text className="text-muted">
-                              {t('users.roleSelectionHint')}
-                            </Form.Text>
-                            {touched.roleIds && !!errors.roleIds && (
-                              <div className="invalid-feedback d-block">
-                                {errors.roleIds}
-                              </div>
-                            )}
-                          </Form.Group>
-                        </Col>
-                      </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  label={(
+                    <>
+                      {t('users.fields.username')} <Text type="danger">*</Text>
+                    </>
+                  )}
+                  name="username"
+                  rules={[{ required: true, message: t('validation.required') }]}
+                  validateStatus={usernameError ? 'error' : undefined}
+                  help={usernameError}
+                >
+                  <Input 
+                    onChange={(e) => {
+                      setUsernameError(null); // Clear previous error
+                      if (e.target.value.length >= 3) {
+                        checkUsernameAvailability(e.target.value, () => {});
+                      }
+                    }}
+                    suffix={checkingUsername ? <LoadingOutlined /> : null}
+                  />
+                </Form.Item>
+              </Col>
+              
+              <Col span={12}>
+                <Form.Item
+                  label={(
+                    <>
+                      {t('users.fields.email')} <Text type="danger">*</Text>
+                    </>
+                  )}
+                  name="email"
+                  rules={[
+                    { required: true, message: t('validation.required') },
+                    { type: 'email', message: t('validation.invalidEmail') }
+                  ]}
+                  validateStatus={emailError ? 'error' : undefined}
+                  help={emailError}
+                >
+                  <Input 
+                    type="email" 
+                    onChange={(e) => {
+                      setEmailError(null); // Clear previous error
+                      if (e.target.value.includes('@')) {
+                        checkEmailAvailability(e.target.value, () => {});
+                      }
+                    }}
+                    suffix={checkingEmail ? <LoadingOutlined /> : null}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+            
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  label={(
+                    <>
+                      {t('users.fields.fullName')} <Text type="danger">*</Text>
+                    </>
+                  )}
+                  name="fullName"
+                  rules={[
+                    { required: true, message: t('validation.required') },
+                    { max: 100, message: t('validation.fullNameMaxLength') }
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+              
+              <Col span={12}>
+                <Form.Item
+                  name="roleIds"
+                  label={t('users.fields.roles')}
+                  rules={[{ required: true, message: t('validation.atLeastOneRole') }]}
+                >
+                  <Select
+                    mode="multiple"
+                    placeholder={t('users.placeholders.selectRoles')}
+                    value={form.getFieldValue('roleIds')} // Bind Formik value
+                    onChange={(value) => form.setFieldsValue({ roleIds: value })} // Update Formik value
+                    options={roleOptions} // Use the role options fetched from API
+                    loading={fetchingRoles} // Show loading spinner while fetching roles
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
 
-                      <Row>
-                        <Col md={6}>
-                          <Form.Group>
-                            <Form.Label htmlFor="superAdmin">
-                              {t('users.fields.superAdmin')}
-                            </Form.Label>
-                            <Form.Check
-                              id="superAdmin"
-                              name="superAdmin"
-                              type="switch"
-                              checked={values.superAdmin}
-                              onChange={(e) => setFieldValue('superAdmin', e.target.checked)}
-                            />
-                          </Form.Group>
-                        </Col>
-                      </Row>
-                      
-                      {!isEditMode && (
-                        <Row>
-                          <Col md={6}>
-                            <Form.Group>
-                              <Form.Label htmlFor="password">
-                                {t('users.fields.password')} <span className="text-danger">*</span>
-                              </Form.Label>
-                              <Form.Control
-                                id="password"
-                                name="password"
-                                type="password"
-                                value={values.password}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                isInvalid={touched.password && !!errors.password}
-                              />
-                              <Form.Control.Feedback type="invalid">
-                                {errors.password}
-                              </Form.Control.Feedback>
-                            </Form.Group>
-                          </Col>
-                          
-                          <Col md={6}>
-                            <Form.Group>
-                              <Form.Label htmlFor="confirmPassword">
-                                {t('users.fields.confirmPassword')}{' '}
-                                <span className="text-danger">*</span>
-                              </Form.Label>
-                              <Form.Control
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                type="password"
-                                value={values.confirmPassword}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                isInvalid={
-                                  touched.confirmPassword && !!errors.confirmPassword
-                                }
-                              />
-                              <Form.Control.Feedback type="invalid">
-                                {errors.confirmPassword}
-                              </Form.Control.Feedback>
-                            </Form.Group>
-                          </Col>
-                        </Row>
-                      )}
-                      
-                      {loading && <OverlayLoading />}
-                    </div>
-                  </Card.Body>
-                  
-                  <Card.Footer>
-                    <div className="d-flex justify-content-between">
-                      <Button
-                        variant="secondary"
-                        onClick={() => navigate('/users')}
-                      >
-                        {t('common.cancel')}
-                      </Button>
-                      <Button
-                        variant="primary"
-                        type="submit"
-                        disabled={
-                          !(isValid && (dirty || isEditMode)) || 
-                          loading || 
-                          checkingUsername || 
-                          checkingEmail || 
-                          !!usernameError || 
-                          !!emailError
-                        }
-                      >
-                        <FontAwesomeIcon icon={faSave} className="mr-1" />
-                        {t('common.save')}
-                      </Button>
-                    </div>
-                  </Card.Footer>
-                </Card>
-              </Form>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  label={t('users.fields.superAdmin')}
+                  name="superAdmin"
+                  valuePropName="checked"
+                >
+                  <Checkbox onChange={() => {
+                    // Trigger validation of roleIds field when superAdmin changes
+                    setTimeout(() => form.validateFields(['roleIds']), 0);
+                  }} />
+                </Form.Item>
+                <Text type="secondary">
+                  {t('users.superAdminHint')}
+                </Text>
+              </Col>
+            </Row>
+            
+            {!isEditMode && (
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label={(
+                      <>
+                        {t('users.fields.password')} <Text type="danger">*</Text>
+                      </>
+                    )}
+                    name="password"
+                    rules={[
+                      { required: true, message: t('validation.required') },
+                      { min: 6, message: t('validation.passwordMinLength') }
+                    ]}
+                  >
+                    <Input.Password />
+                  </Form.Item>
+                </Col>
+                
+                <Col span={12}>
+                  <Form.Item
+                    label={(
+                      <>
+                        {t('users.fields.confirmPassword')} <Text type="danger">*</Text>
+                      </>
+                    )}
+                    name="confirmPassword"
+                    rules={[
+                      { required: true, message: t('validation.required') },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value || getFieldValue('password') === value) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(new Error(t('validation.passwordsMustMatch')));
+                        },
+                      }),
+                    ]}
+                  >
+                    <Input.Password />
+                  </Form.Item>
+                </Col>
+              </Row>
             )}
-          </Formik>
-        </div>
-      </section>
+            
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              borderTop: '1px solid #f0f0f0',
+              paddingTop: 16,
+              marginTop: 16
+            }}>
+              <Button onClick={() => navigate('/users')}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                disabled={loading || checkingUsername || checkingEmail || !!usernameError || !!emailError}
+                icon={<SaveOutlined />}
+              >
+                {t('common.save')}
+              </Button>
+            </div>
+          </Form>
+        </Card>
+      </div>
     </>
   );
 };

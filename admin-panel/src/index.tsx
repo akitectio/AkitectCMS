@@ -1,14 +1,19 @@
-import { createRoot } from 'react-dom/client';
-import { Provider } from 'react-redux';
 import App from '@app/App';
 import store from '@store/store';
+import { createRoot } from 'react-dom/client';
+import { Provider } from 'react-redux';
 
-import * as serviceWorker from './serviceWorker';
-import { BrowserRouter } from 'react-router-dom';
 import ReactGA from 'react-ga4';
+import { BrowserRouter } from 'react-router-dom';
+import * as serviceWorker from './serviceWorker';
 
-import './utils/i18n';
 import './index.scss';
+import './utils/i18n';
+
+// Import Ant Design global styles
+import 'antd/dist/reset.css';
+// Keep the original styles for legacy components during migration
+// import './scss/_adminlte.raw.scss';
 
 export const { VITE_NODE_ENV, VITE_GA_ID } = import.meta.env;
 

@@ -1,25 +1,57 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { toggleSidebarMenu } from '@app/store/reducers/ui';
-import {
-  addWindowClass,
-  removeWindowClass,
-  scrollbarVisible,
-} from '@app/utils/helpers';
-import ControlSidebar from '@app/modules/main/control-sidebar/ControlSidebar';
-import Header from '@app/modules/main/header/Header';
-import Footer from '@app/modules/main/footer/Footer';
-import { useAppDispatch, useAppSelector } from '@app/store/store';
-import MenuSidebar from './menu-sidebar/MenuSidebar';
-import { styled } from 'styled-components';
-import { Outlet } from 'react-router-dom';
 import { Loading } from '@app/components/Loading';
+import ControlSidebar from '@app/modules/main/control-sidebar/ControlSidebar';
+import Footer from '@app/modules/main/footer/Footer';
+import Header from '@app/modules/main/header/Header';
+import { toggleSidebarMenu } from '@app/store/reducers/ui';
+import { useAppDispatch, useAppSelector } from '@app/store/store';
+import {
+    addWindowClass,
+    removeWindowClass,
+    scrollbarVisible,
+} from '@app/utils/helpers';
+import { Layout } from 'antd';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import { styled } from 'styled-components';
+import MenuSidebar from './menu-sidebar/MenuSidebar';
+
+const { Content } = Layout;
 
 const MENU_WIDTH = 250;
 
-export const Container = styled.div<{ $isScrollbarVisible: boolean }>`
-  min-height: 100%;
-  ${(props) =>
-    `width: calc(100% - ${props.$isScrollbarVisible ? '16px' : '0px'});`};
+const StyledLayout = styled(Layout)`
+  min-height: 100vh;
+`;
+
+const MainContent = styled(Content)<{ $sidebarWidth: string }>`
+  margin-left: ${(props) => props.$sidebarWidth};
+  margin-top: 56px;
+  padding: 24px;
+  background-color: #f4f6f9;
+  transition: margin-left 0.3s ease-in-out;
+  
+  @media (max-width: 768px) {
+    margin-left: 0;
+  }
+`;
+
+const MainContainer = styled.div<{ $boxed: boolean }>`
+  ${(props) => props.$boxed ? 'max-width: 1250px; margin: 0 auto;' : ''}
+`;
+
+const SidebarOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+  
+  &.visible {
+    display: block;
+  }
 `;
 
 const Main = () => {
@@ -37,7 +69,7 @@ const Main = () => {
   const currentUser = useAppSelector((state) => state.auth.currentUser);
   const [isAppLoaded, setIsAppLoaded] = useState(false);
   const [isScrollbarVisible, setIsScrollbarVisible] = useState(false);
-  const mainRef = useRef<HTMLDivElement | undefined>();
+  const mainRef = useRef<HTMLDivElement>(null);
 
   const handleToggleMenuSidebar = () => {
     dispatch(toggleSidebarMenu());
@@ -54,7 +86,6 @@ const Main = () => {
 
     addWindowClass('sidebar-mini');
 
-    // fetchProfile();
     return () => {
       removeWindowClass('sidebar-mini');
     };
@@ -100,66 +131,58 @@ const Main = () => {
     handleUIChanges();
   }, [mainRef.current]);
 
+  // Calculate sidebar width based on screen size and navigation mode
+  const getSidebarWidth = () => {
+    if (topNavigation) {
+      return '0px';
+    }
+    if (['sm', 'xs'].includes(screenSize)) {
+      return '0px';
+    }
+    return `${MENU_WIDTH}px`;
+  };
+
   const getAppTemplate = useCallback(() => {
     if (!isAppLoaded) {
       return <Loading />;
     }
+    
+    const sidebarWidth = getSidebarWidth();
+    
     return (
-      <>
+      <StyledLayout>
         <Header
           containered={layoutBoxed}
           style={{
-            marginLeft: !['sm', 'xs'].includes(screenSize)
-              ? topNavigation
-                ? '0px'
-                : `${MENU_WIDTH}px`
-              : '0px',
+            marginLeft: sidebarWidth,
           }}
         />
 
         {!topNavigation && <MenuSidebar />}
 
-        <div
-          ref={mainRef as any}
-          className="content-wrapper"
-          style={{
-            marginLeft: !['sm', 'xs'].includes(screenSize)
-              ? topNavigation
-                ? '0px'
-                : `${MENU_WIDTH}px`
-              : '0px',
-          }}
+        <MainContent 
+          ref={mainRef}
+          $sidebarWidth={sidebarWidth}
         >
-          <section className="content">
-            <div className={layoutBoxed ? 'container' : ''}>
-              <Outlet />
-            </div>
-          </section>
-        </div>
+          <MainContainer $boxed={layoutBoxed}>
+            <Outlet />
+          </MainContainer>
+        </MainContent>
 
-        {/* <Content  containered={layoutBoxed} /> */}
         <Footer
           containered={layoutBoxed}
           style={{
-            marginLeft:
-            !['sm', 'xs'].includes(screenSize)                ? topNavigation
-                  ? '0px'
-                  : `${MENU_WIDTH}px`
-                : '0px',
+            marginLeft: sidebarWidth,
           }}
         />
+        
         <ControlSidebar />
-        <div
-          id="sidebar-overlay"
-          role="presentation"
+        
+        <SidebarOverlay
+          className={screenSize === 'sm' && menuSidebarCollapsed ? 'visible' : ''}
           onClick={handleToggleMenuSidebar}
-          onKeyDown={() => {}}
-          style={{
-            display:
-              screenSize === 'sm' && menuSidebarCollapsed ? 'block' : undefined,
-          }}
         />
-      </>
+      </StyledLayout>
     );
   }, [
     isAppLoaded,
@@ -169,11 +192,7 @@ const Main = () => {
     topNavigation,
   ]);
 
-  return (
-    <Container $isScrollbarVisible={isScrollbarVisible} className="wrapper">
-      {getAppTemplate()}
-    </Container>
-  );
+  return getAppTemplate();
 };
 
 export default Main;

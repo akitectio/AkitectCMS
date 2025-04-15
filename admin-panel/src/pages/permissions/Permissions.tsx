@@ -1,24 +1,54 @@
 import {
-  createPermissionRequest,
-  deletePermissionRequest,
-  fetchPermissionsRequest,
-  resetPermissionState,
-  updatePermissionRequest
+    DeleteOutlined,
+    EditOutlined,
+    LockOutlined,
+    PlusOutlined,
+    SearchOutlined
+} from '@ant-design/icons';
+import {
+    createPermissionRequest,
+    deletePermissionRequest,
+    fetchPermissionsRequest,
+    resetPermissionState,
+    updatePermissionRequest
 } from '@app/store/reducers/permissions';
 import { useAppDispatch, useAppSelector } from '@app/store/store';
 import { Permission } from '@app/types/user';
-import { ContentHeader, DataTable } from '@components';
+import { ContentHeader } from '@components';
 import {
-  faEdit,
-  faLock,
-  faPlus,
-  faTrash
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+    Button,
+    Card,
+    Col,
+    Form,
+    Input,
+    Modal,
+    Row,
+    Space,
+    Table,
+    Tooltip,
+    Typography
+} from 'antd';
 import { useEffect, useState } from 'react';
-import { Button, Card, Form, Modal } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
+import styled from 'styled-components';
+
+const { Text } = Typography;
+const { Item: FormItem } = Form;
+
+const SearchWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  
+  .ant-input-affix-wrapper {
+    width: 250px;
+  }
+`;
+
+const ActionButtonsWrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
 
 const Permissions = () => {
   const { t } = useTranslation();
@@ -52,6 +82,7 @@ const Permissions = () => {
   // Form states
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
+  const [form] = Form.useForm();
 
   // Load permissions when component mounts or when pagination/sorting changes
   useEffect(() => {
@@ -90,31 +121,36 @@ const Permissions = () => {
   };
 
   // Handle search
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
+  const handleSearch = () => {
     setPage(0); // Reset to first page when searching
+    fetchPermissions();
+  };
+  
+  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    if (e.target.value === '') {
+      setPage(0);
+      dispatch(fetchPermissionsRequest({ page: 0, size, sortBy, direction, search: '' }));
+    }
   };
 
   // Handle page change
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (page: number, pageSize: number) => {
+    const newPage = page - 1; // Convert to 0-based for API
     setPage(newPage);
+    setSize(pageSize);
+    dispatch(fetchPermissionsRequest({ page: newPage, size: pageSize, sortBy, direction, search: searchQuery }));
   };
 
-  // Handle items per page change
-  const handleItemsPerPageChange = (newSize: number) => {
-    setSize(newSize);
-    setPage(0); // Reset to first page when changing items per page
-  };
-
-  // Handle sort change
-  const handleSortChange = (column: string) => {
-    if (sortBy === column) {
-      // Toggle direction
-      setDirection(direction === 'asc' ? 'desc' : 'asc');
-    } else {
-      // New column, default to asc
-      setSortBy(column);
-      setDirection('asc');
+  // Handle table sort
+  const handleTableChange = (_pagination, _filters, sorter) => {
+    if (sorter && sorter.field) {
+      const newSortBy = sorter.field;
+      const newDirection = sorter.order === 'ascend' ? 'asc' : 'desc';
+      
+      setSortBy(newSortBy);
+      setDirection(newDirection);
+      dispatch(fetchPermissionsRequest({ page, size, sortBy: newSortBy, direction: newDirection, search: searchQuery }));
     }
   };
 
@@ -123,6 +159,7 @@ const Permissions = () => {
     // Reset form
     setFormName('');
     setFormDescription('');
+    form.resetFields();
     setShowCreateModal(true);
   };
 
@@ -131,6 +168,10 @@ const Permissions = () => {
     setSelectedPermission(permission);
     setFormName(permission.name);
     setFormDescription(permission.description);
+    form.setFieldsValue({
+      name: permission.name,
+      description: permission.description
+    });
     setShowEditModal(true);
   };
 
@@ -142,31 +183,29 @@ const Permissions = () => {
 
   // Handle create permission
   const handleCreatePermission = () => {
-    if (!formName || !formDescription) {
-      toast.error(t('permissions.form.allFieldsRequired'));
-      return;
-    }
-
-    dispatch(createPermissionRequest({
-      name: formName,
-      description: formDescription
-    }));
+    form.validateFields().then(values => {
+      dispatch(createPermissionRequest({
+        name: values.name,
+        description: values.description
+      }));
+    }).catch(info => {
+      console.log('Validate Failed:', info);
+    });
   };
 
   // Handle update permission
   const handleUpdatePermission = () => {
     if (!selectedPermission) return;
     
-    if (!formName || !formDescription) {
-      toast.error(t('permissions.form.allFieldsRequired'));
-      return;
-    }
-
-    dispatch(updatePermissionRequest({
-      id: selectedPermission.id,
-      name: formName,
-      description: formDescription
-    }));
+    form.validateFields().then(values => {
+      dispatch(updatePermissionRequest({
+        id: selectedPermission.id,
+        name: values.name,
+        description: values.description
+      }));
+    }).catch(info => {
+      console.log('Validate Failed:', info);
+    });
   };
 
   // Handle delete permission
@@ -176,220 +215,221 @@ const Permissions = () => {
     dispatch(deletePermissionRequest({ id: selectedPermission.id }));
   };
 
-  // Define columns for DataTable
+  // Table columns
   const columns = [
     {
+      title: 'ID',
+      dataIndex: 'id',
       key: 'id',
-      label: 'ID'
+      sorter: true,
     },
     {
+      title: t('permissions.name'),
+      dataIndex: 'name',
       key: 'name',
-      label: t('permissions.name')
+      sorter: true,
     },
     {
+      title: t('permissions.description'),
+      dataIndex: 'description',
       key: 'description',
-      label: t('permissions.description')
+      sorter: true,
     },
     {
+      title: t('permissions.actions'),
       key: 'actions',
-      label: t('permissions.actions'),
-      render: (permission: Permission) => (
-        <>
-          <Button
-            variant="info"
-            size="sm"
-            className="mr-1"
-            onClick={() => handleOpenEditModal(permission)}
-            disabled={updating}
-          >
-            <FontAwesomeIcon icon={faEdit} />
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => handleOpenDeleteModal(permission)}
-            disabled={deleting}
-          >
-            <FontAwesomeIcon icon={faTrash} />
-          </Button>
-        </>
+      render: (_, record: Permission) => (
+        <Space>
+          <Tooltip title={t('permissions.edit')}>
+            <Button 
+              type="primary" 
+              icon={<EditOutlined />} 
+              size="small"
+              onClick={() => handleOpenEditModal(record)}
+            />
+          </Tooltip>
+          
+          <Tooltip title={t('permissions.delete')}>
+            <Button 
+              danger 
+              icon={<DeleteOutlined />} 
+              size="small"
+              onClick={() => handleOpenDeleteModal(record)}
+              loading={deleting && selectedPermission?.id === record.id}
+            />
+          </Tooltip>
+        </Space>
       )
     }
   ];
 
   return (
-    <div>
+    <>
       <ContentHeader title={t('permissions.management')} />
       
-      <section className="content">
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-12">
-              <Card>
-                <Card.Header>
-                  <h3 className="card-title">
-                    <FontAwesomeIcon icon={faLock} className="mr-2" />
-                    {t('permissions.list')}
-                  </h3>
-                  <div className="card-tools">
-                    <Button 
-                      variant="primary" 
-                      size="sm"
-                      onClick={handleOpenCreateModal}
-                      disabled={creating}
-                    >
-                      <FontAwesomeIcon icon={faPlus} className="mr-1" />
-                      {t('permissions.addNew')}
-                    </Button>
-                  </div>
-                </Card.Header>
-                <Card.Body>
-                  <DataTable
-                    data={permissions || []}
-                    columns={columns}
-                    loading={loading}
-                    isServerSide={true}
-                    currentPage={page}
-                    defaultItemsPerPage={size}
-                    totalItems={total}
-                    onSearch={handleSearch}
-                    onPageChange={handlePageChange}
-                    onItemsPerPageChange={handleItemsPerPageChange}
-                    searchPlaceholder={t('permissions.search')}
-                    emptyMessage={t('permissions.noPermissions')}
-                  />
-                </Card.Body>
-              </Card>
-            </div>
-          </div>
+      <Card
+        title={
+          <Space>
+            <LockOutlined />
+            {t('permissions.list')}
+          </Space>
+        }
+        extra={
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={handleOpenCreateModal}
+            loading={creating}
+          >
+            {t('permissions.addNew')}
+          </Button>
+        }
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Row gutter={24} align="middle">
+            <Col xs={24} md={12}>
+              <SearchWrapper>
+                <Input 
+                  placeholder={t('permissions.search')}
+                  value={searchQuery}
+                  onChange={onSearchChange}
+                  onPressEnter={handleSearch}
+                  prefix={<SearchOutlined />}
+                  allowClear
+                />
+                <Button type="primary" onClick={handleSearch} style={{ marginLeft: 8 }}>
+                  {t('common.search')}
+                </Button>
+              </SearchWrapper>
+            </Col>
+          </Row>
         </div>
-      </section>
+        
+        <Table
+          dataSource={permissions || []}
+          columns={columns}
+          rowKey="id"
+          loading={loading}
+          onChange={handleTableChange}
+          pagination={{
+            current: page + 1, // Convert to 1-based for display
+            pageSize: size,
+            total: total,
+            onChange: handlePageChange,
+            showSizeChanger: true,
+            showTotal: (total) => `${t('pagination.total')}: ${total} ${t('pagination.items')}`,
+          }}
+          bordered
+        />
+      </Card>
 
       {/* Create Permission Modal */}
-      <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>{t('permissions.form.createTitle')}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>{t('permissions.name')}</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder={t('permissions.form.namePlaceholder')}
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>{t('permissions.description')}</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder={t('permissions.form.descriptionPlaceholder')}
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-              />
-            </Form.Group>
-           
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
+      <Modal 
+        title={t('permissions.form.createTitle')}
+        open={showCreateModal}
+        onCancel={() => setShowCreateModal(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShowCreateModal(false)}>
             {t('permissions.form.cancel')}
-          </Button>
+          </Button>,
           <Button 
-            variant="primary" 
+            key="submit" 
+            type="primary" 
+            loading={creating}
             onClick={handleCreatePermission}
-            disabled={creating}
           >
-            {creating ? (
-              <>
-                <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                {t('permissions.form.creating')}
-              </>
-            ) : t('permissions.form.create')}
+            {t('permissions.form.create')}
           </Button>
-        </Modal.Footer>
+        ]}
+      >
+        <Form form={form} layout="vertical">
+          <FormItem
+            name="name"
+            label={t('permissions.name')}
+            rules={[{ required: true, message: t('permissions.form.nameRequired') }]}
+          >
+            <Input placeholder={t('permissions.form.namePlaceholder')} />
+          </FormItem>
+          
+          <FormItem
+            name="description"
+            label={t('permissions.description')}
+            rules={[{ required: true, message: t('permissions.form.descriptionRequired') }]}
+          >
+            <Input placeholder={t('permissions.form.descriptionPlaceholder')} />
+          </FormItem>
+        </Form>
       </Modal>
 
       {/* Edit Permission Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>{t('permissions.form.editTitle')}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>{t('permissions.name')}</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder={t('permissions.form.namePlaceholder')}
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>{t('permissions.description')}</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder={t('permissions.form.descriptionPlaceholder')}
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+      <Modal 
+        title={t('permissions.form.editTitle')}
+        open={showEditModal}
+        onCancel={() => setShowEditModal(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShowEditModal(false)}>
             {t('permissions.form.cancel')}
-          </Button>
+          </Button>,
           <Button 
-            variant="info" 
+            key="submit" 
+            type="primary" 
+            loading={updating}
             onClick={handleUpdatePermission}
-            disabled={updating}
           >
-            {updating ? (
-              <>
-                <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                {t('permissions.form.updating')}
-              </>
-            ) : t('permissions.form.update')}
+            {t('permissions.form.update')}
           </Button>
-        </Modal.Footer>
+        ]}
+      >
+        <Form form={form} layout="vertical">
+          <FormItem
+            name="name"
+            label={t('permissions.name')}
+            rules={[{ required: true, message: t('permissions.form.nameRequired') }]}
+          >
+            <Input placeholder={t('permissions.form.namePlaceholder')} />
+          </FormItem>
+          
+          <FormItem
+            name="description"
+            label={t('permissions.description')}
+            rules={[{ required: true, message: t('permissions.form.descriptionRequired') }]}
+          >
+            <Input placeholder={t('permissions.form.descriptionPlaceholder')} />
+          </FormItem>
+        </Form>
       </Modal>
 
       {/* Delete Permission Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>{t('permissions.delete.title')}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+      <Modal 
+        title={t('permissions.delete.title')}
+        open={showDeleteModal}
+        onCancel={() => setShowDeleteModal(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShowDeleteModal(false)}>
+            {t('permissions.delete.button.cancel')}
+          </Button>,
+          <Button 
+            key="delete" 
+            danger 
+            loading={deleting}
+            onClick={handleDeletePermission}
+          >
+            {t('permissions.delete.button.confirm')}
+          </Button>
+        ]}
+      >
+        <p>
           {t('permissions.delete.confirmation')}
           <strong> {selectedPermission?.name}</strong>?
-          <div className="alert alert-warning mt-3">
-            <FontAwesomeIcon icon={faLock} className="mr-2" />
+        </p>
+        <div style={{ backgroundColor: '#fffbe6', padding: 16, borderRadius: 4, border: '1px solid #ffe58f', marginTop: 16 }}>
+          <Text type="warning">
+            <LockOutlined style={{ marginRight: 8 }} />
             {t('permissions.delete.warning')}
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            {t('permissions.delete.button.cancel')}
-          </Button>
-          <Button 
-            variant="danger" 
-            onClick={handleDeletePermission}
-            disabled={deleting}
-          >
-            {deleting ? (
-              <>
-                <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                {t('permissions.delete.button.deleting')}
-              </>
-            ) : t('permissions.delete.button.confirm')}
-          </Button>
-        </Modal.Footer>
+          </Text>
+        </div>
       </Modal>
-    </div>
+    </>
   );
 };
 

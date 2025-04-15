@@ -1,17 +1,27 @@
-import ContentHeader from '@app/components/content-header/ContentHeader';
+import {
+  ClockCircleOutlined,
+  EditOutlined,
+  HistoryOutlined,
+  KeyOutlined,
+  MailOutlined,
+  SafetyOutlined,
+  UserOutlined
+} from '@ant-design/icons';
 import userService from '@app/services/users';
 import { useAppSelector } from '@app/store/store';
 import { User } from '@app/types/user';
+import { Avatar, Badge, Button, Card, Col, Descriptions, Divider, message, Row, Spin, Tabs, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
+
+const { Title, Text, Paragraph } = Typography;
+const { TabPane } = Tabs;
 
 const Profile: React.FC = () => {
   const [t] = useTranslation();
   const { currentUser } = useAppSelector(state => state.auth);
-  const { items: roles } = useAppSelector(state => state.roles); // Lấy danh sách vai trò từ Redux store
+  const { items: roles } = useAppSelector(state => state.roles);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -25,13 +35,13 @@ const Profile: React.FC = () => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        if (currentUser?.id) { // Simplified using optional chaining
+        if (currentUser?.id) {
           const userData = await userService.getUserById(currentUser.id);
           setUser(userData);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
-        toast.error(t('profile.fetchError'));
+        message.error(t('profile.fetchError'));
       } finally {
         setLoading(false);
       }
@@ -41,150 +51,150 @@ const Profile: React.FC = () => {
   }, [currentUser, t]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
+        <Spin size="large" />
+      </div>
+    );
   }
 
   if (!user) {
-    return <div>{t('profile.userNotFound')}</div>;
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <Title level={4}>{t('profile.userNotFound')}</Title>
+      </div>
+    );
   }
 
   return (
-    <>
-      <ContentHeader title={t('profile.title')} />
+    <div style={{ padding: '24px 0' }}>
+      <Title level={2} style={{ marginBottom: '24px' }}>{t('profile.title')}</Title>
 
-      <section className="content">
-        <div className="container-fluid">
-          <Row>
-            {/* Profile Information */}
-            <Col md={4}>
-              <Card className="card-primary card-outline">
-                <Card.Body className="box-profile">
-                  <div className="text-center">
-                    <img
-                      className="profile-user-img img-fluid img-circle"
-                      src={user.avatarUrl ?? '/img/default-profile.png'} // Updated to nullish coalescing
-                      alt={user.fullName ?? user.name ?? 'User avatar'} // Updated to nullish coalescing
-                    />
-                  </div>
+      <Row gutter={[24, 24]}>
+        {/* Profile Information */}
+        <Col xs={24} md={8}>
+          <Card bordered={false}>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <Avatar 
+                size={100} 
+                src={user.avatarUrl ?? '/img/default-profile.png'} 
+                alt={user.fullName ?? user.name ?? 'User avatar'} 
+              />
+              <Title level={4} style={{ marginTop: '16px', marginBottom: '4px' }}>
+                {user.fullName ?? user.name ?? user.username}
+              </Title>
+              {user.roleIds && (
+                <Text type="secondary">{getRoleNames(user.roleIds)}</Text>
+              )}
+              <div style={{ marginTop: '16px' }}>
+                <Link to="/profile/edit">
+                  <Button type="primary" icon={<EditOutlined />}>
+                    {t('profile.editProfile')}
+                  </Button>
+                </Link>
+              </div>
+            </div>
 
-                  <h3 className="profile-username text-center">
-                    {user.fullName ?? user.name ?? user.username /* Updated to nullish coalescing */}
-                  </h3>
+            <Divider />
 
-                  {user.roleIds && (
-                    <p className="text-muted text-center">
-                      {getRoleNames(user.roleIds)}
-                    </p>
-                  )}
+            <Descriptions title={t('profile.about')} column={1}>
+              <Descriptions.Item 
+                label={t('profile.username')} 
+                labelStyle={{ fontWeight: 'bold' }}
+              >
+                <UserOutlined style={{ marginRight: '8px' }} />
+                {user.username}
+              </Descriptions.Item>
+              
+              <Descriptions.Item 
+                label={t('profile.email')} 
+                labelStyle={{ fontWeight: 'bold' }}
+              >
+                <MailOutlined style={{ marginRight: '8px' }} />
+                {user.email}
+              </Descriptions.Item>
+              
+              <Descriptions.Item 
+                label={t('profile.lastLogin')} 
+                labelStyle={{ fontWeight: 'bold' }}
+              >
+                <ClockCircleOutlined style={{ marginRight: '8px' }} />
+                {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : t('profile.never')}
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+        </Col>
 
-                  <Link to="/profile/edit">
-                    <Button variant="primary" block>
-                      {t('profile.editProfile')}
+        {/* Account Management */}
+        <Col xs={24} md={16}>
+          <Card 
+            bordered={false}
+            title={t('profile.accountManagement')}
+          >
+            <Tabs defaultActiveKey="1">
+              <TabPane 
+                tab={
+                  <span>
+                    <KeyOutlined />
+                    {t('profile.securitySettings')}
+                  </span>
+                } 
+                key="1"
+              >
+                <Card bordered={false}>
+                  <Paragraph>{t('profile.securitySettingsDesc')}</Paragraph>
+                  <Link to="/profile/change-password">
+                    <Button type="primary">
+                      {t('profile.changePassword')}
                     </Button>
                   </Link>
-                </Card.Body>
-              </Card>
-
-              <Card className="card-primary">
-                <Card.Header>
-                  <h3 className="card-title">{t('profile.about')}</h3>
-                </Card.Header>
-                <Card.Body>
-                  <strong>
-                    <i className="fas fa-user mr-1"></i> {t('profile.username')}
-                  </strong>
-                  <p className="text-muted">{user.username}</p>
-
-                  <hr />
-
-                  <strong>
-                    <i className="fas fa-envelope mr-1"></i> {t('profile.email')}
-                  </strong>
-                  <p className="text-muted">{user.email}</p>
-
-                  <hr />
-
-                  <strong>
-                    <i className="fas fa-clock mr-1"></i> {t('profile.lastLogin')}
-                  </strong>
-                  <p className="text-muted">
-                    {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : t('profile.never')}
-                  </p>
-                </Card.Body>
-              </Card>
-            </Col>
-
-            {/* Account Management */}
-            <Col md={8}>
-              <Card className="card-primary card-outline">
-                <Card.Header>
-                  <h3 className="card-title">{t('profile.accountManagement')}</h3>
-                </Card.Header>
-                <Card.Body>
-                  <Row>
-                    <Col sm={6}>
-                      <Card>
-                        <Card.Body>
-                          <h5>
-                            <i className="fas fa-key mr-2"></i>
-                            {t('profile.securitySettings')}
-                          </h5>
-                          <p>{t('profile.securitySettingsDesc')}</p>
-                          <Link to="/profile/change-password">
-                            <Button variant="primary" size="sm">
-                              {t('profile.changePassword')}
-                            </Button>
-                          </Link>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-
-                    <Col sm={6}>
-                      <Card>
-                        <Card.Body>
-                          <h5>
-                            <i className="fas fa-history mr-2"></i>
-                            {t('profile.sessionManagement')}
-                          </h5>
-                          <p>{t('profile.sessionManagementDesc')}</p>
-                          <Link to="/profile/sessions">
-                            <Button variant="primary" size="sm">
-                              {t('profile.viewSessions')}
-                            </Button>
-                          </Link>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-                  </Row>
-
-                  <Row className="mt-3">
-                    <Col sm={12}>
-                      <Card>
-                        <Card.Body>
-                          <h5>
-                            <i className="fas fa-shield-alt mr-2"></i>
-                            {t('profile.accountStatus')}
-                          </h5>
-                          <p>
-                            {t('profile.accountStatusDesc')}
-                          </p>
-                          <div>
-                            <strong>{t('profile.status')}:</strong>{' '}
-                            <span className={`badge bg-${user.status === 'ACTIVE' ? 'success' : 'danger'}`}>
-                              {user.status}
-                            </span>
-                          </div>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-                  </Row>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        </div>
-      </section>
-    </>
+                </Card>
+              </TabPane>
+              
+              <TabPane 
+                tab={
+                  <span>
+                    <HistoryOutlined />
+                    {t('profile.sessionManagement')}
+                  </span>
+                } 
+                key="2"
+              >
+                <Card bordered={false}>
+                  <Paragraph>{t('profile.sessionManagementDesc')}</Paragraph>
+                  <Link to="/profile/sessions">
+                    <Button type="primary">
+                      {t('profile.viewSessions')}
+                    </Button>
+                  </Link>
+                </Card>
+              </TabPane>
+              
+              <TabPane 
+                tab={
+                  <span>
+                    <SafetyOutlined />
+                    {t('profile.accountStatus')}
+                  </span>
+                } 
+                key="3"
+              >
+                <Card bordered={false}>
+                  <Paragraph>{t('profile.accountStatusDesc')}</Paragraph>
+                  <div>
+                    <Text strong>{t('profile.status')}: </Text>
+                    <Badge 
+                      status={user.status === 'ACTIVE' ? 'success' : 'error'} 
+                      text={user.status} 
+                    />
+                  </div>
+                </Card>
+              </TabPane>
+            </Tabs>
+          </Card>
+        </Col>
+      </Row>
+    </div>
   );
 };
 

@@ -1,113 +1,130 @@
+import { LockOutlined } from '@ant-design/icons';
 import { envConfig } from '@app/configs/loadEnv';
-import { Button } from '@app/styles/common';
 import { setWindowClass } from '@app/utils/helpers';
-import { useFormik } from 'formik';
-import { Form, InputGroup } from 'react-bootstrap';
+import { Button, Card, Form, Input, Typography } from 'antd';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import * as Yup from 'yup';
+import styled from 'styled-components';
+
+const { Title, Text } = Typography;
+
+const RecoverPasswordContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f0f2f5;
+`;
+
+const StyledCard = styled(Card)`
+  width: 400px;
+  max-width: 90%;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+`;
+
+const StyledTitle = styled(Title)`
+  text-align: center;
+  margin-bottom: 20px !important;
+`;
 
 const RecoverPassword = () => {
   const [t] = useTranslation();
+  const [loading, setLoading] = useState(false);
 
-  const { handleChange, values, handleSubmit, touched, errors } = useFormik({
-    initialValues: {
-      password: '',
-      confirmPassword: '',
-    },
-    validationSchema: Yup.object({
-      password: Yup.string()
-        .min(5, 'Must be 5 characters or more')
-        .max(30, 'Must be 30 characters or less')
-        .required('Required'),
-      confirmPassword: Yup.string()
-        .min(5, 'Must be 5 characters or more')
-        .max(30, 'Must be 30 characters or less')
-        .required('Required'),
-    }),
-    onSubmit: (values) => {
+  // Add validation schema
+  const validationRules = {
+    password: [
+      { required: true, message: 'Password is required!' },
+      { min: 5, message: 'Must be 5 characters or more' },
+      { max: 30, message: 'Must be 30 characters or less' }
+    ],
+    confirmPassword: [
+      { required: true, message: 'Please confirm your password!' },
+      ({ getFieldValue }) => ({
+        validator(_, value) {
+          if (!value || getFieldValue('password') === value) {
+            return Promise.resolve();
+          }
+          return Promise.reject(new Error('The two passwords do not match!'));
+        },
+      })
+    ]
+  };
+
+  const onFinish = (values: { password: string; confirmPassword: string }) => {
+    setLoading(true);
+    // Simulate API call
+    setTimeout(() => {
       toast.warn('Not yet functional');
       console.log('values', values);
-    },
-  });
+      setLoading(false);
+    }, 1000);
+  };
 
   setWindowClass('hold-transition login-page');
+  
   return (
-    <div className="login-box">
-      <div className="card card-outline card-primary">
-        <div className="card-header text-center">
-          <Link to="/" className="h1">
-            {envConfig.siteName}
-          </Link>
+    <RecoverPasswordContainer>
+      <StyledCard>
+        <StyledTitle level={3}>
+          <Link to="/">{envConfig.siteName}</Link>
+        </StyledTitle>
+        
+        <Text style={{ display: 'block', textAlign: 'center', marginBottom: '24px' }}>
+          {t('recover.oneStepAway')}
+        </Text>
+        
+        <Form
+          name="recoverPassword"
+          onFinish={onFinish}
+          layout="vertical"
+        >
+          <Form.Item
+            name="password"
+            rules={validationRules.password}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Password"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="confirmPassword"
+            dependencies={['password']}
+            rules={validationRules.confirmPassword}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Confirm password"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              disabled={loading}
+              block
+              size="large"
+            >
+              {t('recover.changePassword')}
+            </Button>
+          </Form.Item>
+        </Form>
+
+        <div style={{ textAlign: 'center', marginTop: '12px' }}>
+          <Link to="/login">{t('login.button.signIn.label')}</Link>
         </div>
-        <div className="card-body">
-          <p className="login-box-msg">{t('recover.oneStepAway')}</p>
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <InputGroup className="mb-3">
-                <Form.Control
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Password"
-                  onChange={handleChange}
-                  value={values.password}
-                  isValid={touched.password && !errors.password}
-                  isInvalid={touched.password && !!errors.password}
-                />
-                {touched.password && errors.password ? (
-                  <Form.Control.Feedback type="invalid">
-                    {errors.password}
-                  </Form.Control.Feedback>
-                ) : (
-                  <InputGroup.Append>
-                    <InputGroup.Text>
-                      <i className="fas fa-lock" />
-                    </InputGroup.Text>
-                  </InputGroup.Append>
-                )}
-              </InputGroup>
-            </div>
-            <div className="mb-3">
-              <InputGroup className="mb-3">
-                <Form.Control
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="Confirm password"
-                  onChange={handleChange}
-                  value={values.confirmPassword}
-                  isValid={touched.confirmPassword && !errors.confirmPassword}
-                  isInvalid={
-                    touched.confirmPassword && !!errors.confirmPassword
-                  }
-                />
-                {touched.confirmPassword && errors.confirmPassword ? (
-                  <Form.Control.Feedback type="invalid">
-                    {errors.confirmPassword}
-                  </Form.Control.Feedback>
-                ) : (
-                  <InputGroup.Append>
-                    <InputGroup.Text>
-                      <i className="fas fa-lock" />
-                    </InputGroup.Text>
-                  </InputGroup.Append>
-                )}
-              </InputGroup>
-            </div>
-            <div className="row">
-              <div className="col-12">
-                <Button>{t('recover.changePassword')}</Button>
-              </div>
-            </div>
-          </form>
-          <p className="mt-3 mb-1">
-            <Link to="/login">{t('login.button.signIn.label')}</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+      </StyledCard>
+    </RecoverPasswordContainer>
   );
 };
 

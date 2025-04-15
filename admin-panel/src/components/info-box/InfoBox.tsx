@@ -1,6 +1,10 @@
+import { Card, Col, Progress, Row, Typography } from 'antd';
 import { ReactNode, useMemo } from 'react';
+import styled from 'styled-components';
 import { VARIANT_TYPES } from '../../utils/component-properties';
 import { OverlayLoading } from '../OverlayLoading';
+
+const { Text, Title } = Typography;
 
 export interface InfoBoxProps {
   loading?: 'dark' | boolean;
@@ -18,6 +22,40 @@ export interface InfoBoxProps {
   };
 }
 
+// Map Bootstrap variants to Ant Design colors
+const variantToColor = (variant?: VARIANT_TYPES): string => {
+  switch (variant) {
+    case 'primary': return '#1890ff';
+    case 'info': return '#1890ff';
+    case 'success': return '#52c41a';
+    case 'warning': return '#faad14';
+    case 'danger': return '#ff4d4f';
+    case 'dark': return '#001529';
+    case 'secondary': return '#6c757d';
+    case 'light': return '#f8f9fa';
+    default: return '#1890ff';
+  }
+};
+
+const StyledCard = styled(Card)<{ $bgColor?: string }>`
+  background-color: ${props => props.$bgColor || '#fff'};
+  color: ${props => props.$bgColor && props.$bgColor !== '#f8f9fa' ? '#fff' : 'inherit'};
+  border: none;
+  margin-bottom: 16px;
+`;
+
+const IconWrapper = styled.div<{ $bgColor: string }>`
+  background-color: ${props => props.$bgColor};
+  color: #fff;
+  border-radius: 4px;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+`;
+
 export const InfoBox = ({
   variant,
   title,
@@ -26,53 +64,78 @@ export const InfoBox = ({
   icon,
   loading,
 }: InfoBoxProps) => {
+  const iconColor = variantToColor(icon?.variant || variant);
+  const progressColor = variantToColor(progressBar?.variant || variant);
+  const bgColor = variant ? variantToColor(variant) : undefined;
+  
   const progressBarContent = useMemo(() => {
     if (progressBar) {
-      const proggressBarVariant = progressBar.variant || variant;
       return (
-        <>
-          <div className="progress">
-            <div
-              className={`progress-bar ${proggressBarVariant ? `bg-${proggressBarVariant}` : ''}`}
-              style={{ width: `${progressBar?.level || 0}%` }}
-            />
-          </div>
-          {progressBar?.description || (
-            <span className="progress-description">
-              {progressBar?.description}
-            </span>
+        <div style={{ marginTop: '10px' }}>
+          <Progress 
+            percent={progressBar.level} 
+            strokeColor={progressColor}
+            size="small"
+          />
+          {progressBar?.description && (
+            <Text 
+              type="secondary"
+              style={{ 
+                color: bgColor && bgColor !== '#f8f9fa' ? 'rgba(255, 255, 255, 0.65)' : undefined
+              }}
+            >
+              {progressBar.description}
+            </Text>
           )}
-        </>
+        </div>
       );
     }
-    return;
-  }, [progressBar, variant]);
+    return null;
+  }, [progressBar, progressColor, bgColor]);
 
   const iconContent = useMemo(() => {
-    const iconVariant = icon?.variant || variant;
-
     return (
-      <span
-        className={`info-box-icon ${iconVariant ? `bg-${iconVariant}` : ''}`}
-      >
+      <IconWrapper $bgColor={iconColor}>
         {icon?.content || <i className="far fa-envelope" />}
-      </span>
+      </IconWrapper>
     );
-  }, [icon, variant]);
+  }, [icon, iconColor]);
 
   return (
-    <div className={`info-box ${variant ? `bg-${variant}` : ''}`}>
-      {iconContent}
-      <div className="info-box-content">
-        <span className="info-box-text">{title}</span>
-        <span className="info-box-number">{text}</span>
-        {progressBarContent}
-      </div>
+    <StyledCard $bgColor={bgColor} bodyStyle={{ padding: '16px' }}>
+      <Row gutter={16} align="middle">
+        <Col>
+          {iconContent}
+        </Col>
+        <Col flex="auto">
+          <div>
+            <Text 
+              style={{ 
+                fontSize: '16px',
+                display: 'block',
+                color: bgColor && bgColor !== '#f8f9fa' ? '#fff' : 'inherit'
+              }}
+            >
+              {title}
+            </Text>
+            <Title 
+              level={4} 
+              style={{ 
+                margin: '8px 0',
+                color: bgColor && bgColor !== '#f8f9fa' ? '#fff' : 'inherit'
+              }}
+            >
+              {text}
+            </Title>
+            {progressBarContent}
+          </div>
+        </Col>
+      </Row>
       {loading && (
         <OverlayLoading
           type={typeof loading === 'string' ? loading : 'light'}
         />
       )}
-    </div>
+    </StyledCard>
   );
 };

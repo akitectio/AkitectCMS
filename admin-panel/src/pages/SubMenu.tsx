@@ -1,40 +1,33 @@
+import { CloseOutlined, MinusOutlined } from '@ant-design/icons';
 import { ContentHeader } from '@components';
+import { Button, Card, Space } from 'antd';
 
 const SubMenu = () => {
   return (
     <div>
       <ContentHeader title="SubMenu Page" />
-      <section className="content">
-        <div className="container-fluid">
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Title</h3>
-              <div className="card-tools">
-                <button
-                  type="button"
-                  className="btn btn-tool"
-                  data-widget="collapse"
-                  data-toggle="tooltip"
+      <section style={{ padding: '20px 0' }}>
+        <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+          <Card
+            title="Title"
+            extra={
+              <Space>
+                <Button 
+                  type="text" 
+                  icon={<MinusOutlined />} 
                   title="Collapse"
-                >
-                  <i className="fa fa-minus" />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-tool"
-                  data-widget="remove"
-                  data-toggle="tooltip"
+                />
+                <Button 
+                  type="text" 
+                  icon={<CloseOutlined />} 
                   title="Remove"
-                >
-                  <i className="fa fa-times" />
-                </button>
-              </div>
-            </div>
-            <div className="card-body">
-              Start creating your amazing application!
-            </div>
-            <div className="card-footer">Footer</div>
-          </div>
+                />
+              </Space>
+            }
+            actions={[<div key="footer">Footer</div>]}
+          >
+            Start creating your amazing application!
+          </Card>
         </div>
       </section>
     </div>

@@ -1,78 +1,89 @@
+import { CloseOutlined, SearchOutlined } from '@ant-design/icons';
 import { IMenuItem, MENU } from '@app/modules/main/menu-sidebar/MenuSidebar';
-import { Dropdown } from '@profabric/react-components';
-import { useEffect, useRef, useState } from 'react';
+import type { MenuProps } from 'antd';
+import { Dropdown, Empty, Input, List, Typography } from 'antd';
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
-export const StyledDropdown = styled(Dropdown)`
-  border: none;
+const { Text } = Typography;
+
+const SearchContainer = styled.div`
   width: 100%;
-  display: flex;
-  padding: 0;
-  justify-content: center;
-  align-items: center;
-  --pf-dropdown-menu-min-width: 14.625rem;
-  --pf-dropdown-border: none;
-  --pf-dropdown-menu-margin-top: 0px;
+  position: relative;
+`;
 
-  .menu {
-    background-color: #454d55;
+const StyledInput = styled(Input)`
+  background-color: rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 4px;
+  color: inherit;
+
+  .ant-input {
+    background-color: transparent;
+    color: inherit;
   }
 
-  .dropdown-item {
-    padding: 0.5rem 1rem;
+  .ant-input-suffix {
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
   }
+`;
 
-  .nothing-found {
-    color: #c2c7d0;
-    padding: 0.25rem 0.5rem;
-  }
-
-  .list-group {
-    .list-group-item {
-      padding: 0.5rem 0.75rem;
-      cursor: pointer;
+const SearchResultsList = styled(List)`
+  max-height: 300px;
+  overflow-y: auto;
+  
+  .ant-list-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
     }
+  }
+`;
 
-    .search-path {
-      font-size: 80%;
-      color: #adb5bd;
-    }
+const SearchPath = styled(Text)`
+  font-size: 80%;
+  color: #adb5bd;
+`;
+
+const StyledEmpty = styled(Empty)`
+  padding: 16px;
+  
+  .ant-empty-description {
+    color: #adb5bd;
   }
 `;
 
 export const SidebarSearch = () => {
   const [searchText, setSearchText] = useState('');
   const [foundMenuItems, setFoundMenuItems] = useState<IMenuItem[]>([]);
-  const dropdown = useRef(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     setFoundMenuItems([]);
     if (searchText) {
       setFoundMenuItems(findMenuItems(MENU));
+      setDropdownOpen(true);
     } else {
       setSearchText('');
       setFoundMenuItems([]);
+      setDropdownOpen(false);
     }
   }, [searchText]);
 
-  useEffect(() => {
-    if (foundMenuItems && foundMenuItems.length > 0) {
-      setIsDropdownOpen(true);
-    } else {
-      setIsDropdownOpen(false);
-    }
-  }, [foundMenuItems]);
-
-  const handleIconClick = () => {
+  const handleClearSearch = () => {
     setSearchText('');
-    setIsDropdownOpen(false);
+    setDropdownOpen(false);
   };
 
   const handleMenuItemClick = () => {
     setSearchText('');
-    setIsDropdownOpen(false);
+    setDropdownOpen(false);
   };
 
   const findMenuItems = (
@@ -80,82 +91,92 @@ export const SidebarSearch = () => {
     results: IMenuItem[] = []
   ): IMenuItem[] => {
     for (const menuItem of menuItems) {
-      if (menuItem.name.includes(searchText) && menuItem.path) {
+      if (menuItem.name.toLowerCase().includes(searchText.toLowerCase()) && menuItem.path) {
         results.push(menuItem);
       }
       if (menuItem.children) {
-        return findMenuItems(menuItem.children, results);
+        findMenuItems(menuItem.children, results);
       }
     }
     return results;
   };
 
-  const boldString = (str: string, substr: string) => {
-    return str.replaceAll(
-      substr,
-      `<strong class="text-light">${substr}</strong>`
+  // Highlight matching text
+  const highlightText = (text: string, highlight: string) => {
+    if (!highlight.trim()) {
+      return <span>{text}</span>;
+    }
+    
+    const regex = new RegExp(`(${highlight})`, 'gi');
+    const parts = text.split(regex);
+    
+    return (
+      <span>
+        {parts.map((part, i) => 
+          regex.test(part) ? <strong key={i}>{part}</strong> : <span key={i}>{part}</span>
+        )}
+      </span>
     );
+  };
+  
+  const dropdownItems = {
+    items: foundMenuItems.map((item) => ({
+      key: item.path as string,
+      label: (
+        <NavLink to={item.path as string} onClick={handleMenuItemClick}>
+          <div>
+            {highlightText(item.name, searchText)}
+            <div>
+              <SearchPath type="secondary">{item.path}</SearchPath>
+            </div>
+          </div>
+        </NavLink>
+      ),
+    })),
   };
 
   return (
-    <StyledDropdown
-      ref={dropdown}
-      isOpen={isDropdownOpen}
-      hideArrow
-      openOnButtonClick={false}
-    >
-      <div slot="head">
-        <div className="input-group">
-          <input
-            className="form-control form-control-sidebar"
-            type="text"
-            placeholder="Search"
-            aria-label="Search"
-            value={searchText}
-            onInput={(e: any) => setSearchText(e?.target?.value)}
-          />
-          <div className="input-group-append">
-            <button
-              type="button"
-              className="btn btn-sidebar"
-              onClick={() => handleIconClick()}
-            >
-              <i
-                className={`fas ${searchText.length === 0 && 'fa-search'} ${
-                  searchText.length > 0 && 'fa-times'
-                } fa-fw`}
+    <SearchContainer>
+      <Dropdown
+        menu={dropdownItems as MenuProps}
+        open={dropdownOpen && foundMenuItems.length > 0}
+        trigger={['click']}
+        placement="bottomLeft"
+        dropdownRender={(menu) => (
+          <div style={{ backgroundColor: '#fff', boxShadow: '0 3px 6px rgba(0,0,0,0.16)' }}>
+            {foundMenuItems.length > 0 ? (
+              <SearchResultsList
+                itemLayout="horizontal"
+                dataSource={foundMenuItems}
+                renderItem={(item) => (
+                  <List.Item>
+                    <NavLink 
+                      to={item.path || '/'} 
+                      onClick={handleMenuItemClick}
+                      style={{ width: '100%' }}
+                    >
+                      <div style={{ fontWeight: 'bold' }}>
+                        {highlightText(item.name, searchText)}
+                      </div>
+                      <SearchPath type="secondary">{item.path}</SearchPath>
+                    </NavLink>
+                  </List.Item>
+                )}
               />
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="menu" slot="body">
-        {foundMenuItems && foundMenuItems.length === 0 && (
-          <div className="nothing-found">No Element found</div>
-        )}
-        {foundMenuItems.length > 0 && (
-          <div className="list-group">
-            {foundMenuItems &&
-              foundMenuItems.map((menuItem: any) => (
-                <NavLink
-                  key={menuItem.name + menuItem.path}
-                  className="list-group-item"
-                  to={menuItem.path}
-                  onClick={() => handleMenuItemClick()}
-                >
-                  <div
-                    className="search-title"
-                    // eslint-disable-next-line react/no-danger
-                    dangerouslySetInnerHTML={{
-                      __html: boldString(menuItem.name, searchText),
-                    }}
-                  />
-                  <div className="search-path">{menuItem.name}</div>
-                </NavLink>
-              ))}
+            ) : (
+              <StyledEmpty description="No results found" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            )}
           </div>
         )}
-      </div>
-    </StyledDropdown>
+      >
+        <StyledInput
+          placeholder="Search..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          prefix={<SearchOutlined />}
+          suffix={searchText && <CloseOutlined onClick={handleClearSearch} />}
+        />
+      </Dropdown>
+    </SearchContainer>
   );
 };

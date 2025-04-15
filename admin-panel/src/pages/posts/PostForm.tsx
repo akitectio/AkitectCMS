@@ -1,404 +1,303 @@
-import { ArrowLeftOutlined, InboxOutlined, SaveOutlined, SendOutlined } from '@ant-design/icons';
-import api from '@app/services/api';
-import { Button, Card, Col, DatePicker, Form, Input, Row, Select, Space, Upload, message } from 'antd';
-import type { UploadChangeParam } from 'antd/es/upload';
-import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
-import dayjs from 'dayjs';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { FileImageOutlined, RollbackOutlined, SaveOutlined } from '@ant-design/icons';
+import categoryService from '@app/services/categories';
+import postService from '@app/services/posts';
+import { Category } from '@app/types/category';
+import { PostCreateRequest, PostUpdateRequest } from '@app/types/post';
+import { Button, Card, DatePicker, Form, Input, message, Select, Space, Switch, Tabs } from 'antd';
+import moment from 'moment';
+import React, { useEffect, useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useNavigate, useParams } from 'react-router-dom';
 
+const { Option } = Select;
+const { TabPane } = Tabs;
+
 interface PostFormProps {
-  isView?: boolean;
+  mode: 'create' | 'edit';
 }
 
-interface Category {
-  id: string;
-  name: string;
-}
-
-const PostForm = ({ isView = false }: PostFormProps) => {
-  const { t } = useTranslation();
+const PostForm: React.FC<PostFormProps> = ({ mode }) => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { id } = useParams();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [status, setStatus] = useState<string>('draft');
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
-  
-  const isEdit = !!id;
-  const pageTitle = isEdit 
-    ? isView 
-      ? form.getFieldValue('title') || ''
-      : t('posts.editTitle', { title: form.getFieldValue('title') || '' }) 
-    : t('posts.createTitle');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [content, setContent] = useState<string>('');
+  const [imageModalVisible, setImageModalVisible] = useState<boolean>(false);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const response = await api.get('/categories');
-      setCategories(response.data);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      message.error(t('posts.errors.fetchFailed'));
-    }
-  }, [t]);
+  // Load post data if editing
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch categories regardless of mode
+      try {
+        const categoriesData = await categoryService.getAllCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        message.error('Failed to load categories');
+      }
 
-  const fetchPost = useCallback(async (postId: string) => {
+      // Fetch post data if in edit mode
+      if (mode === 'edit' && id) {
+        setLoading(true);
+        try {
+          const post = await postService.getPost(id);
+          
+          // Format the data for the form
+          const formData = {
+            ...post,
+            categoryIds: post.categories?.map(cat => cat.id) || [],
+            publishedAt: post.publishedAt ? moment(post.publishedAt) : null
+          };
+          
+          form.setFieldsValue(formData);
+          setContent(post.content);
+          setLoading(false);
+        } catch (error) {
+          console.error('Failed to fetch post:', error);
+          message.error('Failed to load post data');
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+  }, [mode, id, form]);
+
+  // Handle form submission
+  const handleSubmit = async (values: any) => {
     setLoading(true);
+    
     try {
-      const response = await api.get(`/posts/${postId}`);
-      const post = response.data;
-      
-      form.setFieldsValue({
-        title: post.title,
-        slug: post.slug,
-        content: post.content,
-        excerpt: post.excerpt,
-        categoryId: post.categoryId,
-        status: post.status,
-        publishDate: post.publishDate ? dayjs(post.publishDate) : null,
-        tags: post.tags ? post.tags.join(', ') : '',
-        metaTitle: post.metaTitle || post.title,
-        metaDescription: post.metaDescription || post.excerpt
-      });
-      
-      setStatus(post.status);
-      
-      if (post.featuredImage) {
-        setFileList([
-          {
-            uid: '-1',
-            name: 'featured-image',
-            status: 'done',
-            url: post.featuredImage
-          }
-        ]);
+      const postData: PostCreateRequest | PostUpdateRequest = {
+        ...values,
+        content,
+        publishedAt: values.publishedAt ? values.publishedAt.format() : null,
+        featured: values.featured || false,
+        allowComments: values.allowComments || false
+      };
+
+      if (mode === 'create') {
+        await postService.createPost(postData as PostCreateRequest);
+        message.success('Post created successfully');
+        navigate('/posts');
+      } else if (mode === 'edit' && id) {
+        await postService.updatePost(id, postData as PostUpdateRequest);
+        message.success('Post updated successfully');
+        navigate('/posts');
       }
     } catch (error) {
-      console.error('Error fetching post:', error);
-      message.error(t('posts.errors.postNotFound'));
-      navigate('/posts');
+      console.error('Failed to save post:', error);
+      message.error('Failed to save post. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [form, navigate, t]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  useEffect(() => {
-    if (isEdit && id) {
-      fetchPost(id);
-    }
-  }, [fetchPost, id, isEdit]);
-
-  const handleStatusChange = (value: string) => {
-    setStatus(value);
-    
-    if (value === 'scheduled' && !form.getFieldValue('publishDate')) {
-      form.setFieldsValue({ publishDate: dayjs().add(1, 'day') });
-    }
   };
 
-  const handleFinish = async (values: any) => {
-    if (isView) return;
-    
-    setSubmitting(true);
-    try {
-      // If a publish date is selected but status isn't scheduled, update the status
-      if (values.publishDate && values.status !== 'scheduled') {
-        const publishDate = values.publishDate.toDate();
-        const now = new Date();
-        if (publishDate > now) {
-          values.status = 'scheduled';
-        }
-      }
-
-      // Process tags from comma-separated string to array
-      if (values.tags) {
-        values.tags = values.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag);
-      }
-
-      // Handle featured image upload if changed
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        const formData = new FormData();
-        formData.append('file', fileList[0].originFileObj);
-        const uploadResponse = await api.post('/uploads/images', formData);
-        values.featuredImage = uploadResponse.data.url;
-      } else if (fileList.length > 0 && fileList[0].url) {
-        values.featuredImage = fileList[0].url;
-      }
-
-      if (isEdit && id) {
-        await api.put(`/posts/${id}`, values);
-        message.success(t('posts.messages.updateSuccess'));
-      } else {
-        await api.post('/posts', values);
-        message.success(t('posts.messages.createSuccess'));
-      }
-      navigate('/posts');
-    } catch (error) {
-      console.error('Error saving post:', error);
-      message.error(isEdit ? t('posts.errors.updateFailed') : t('posts.errors.createFailed'));
-    } finally {
-      setSubmitting(false);
-    }
+  // Configure the rich text editor
+  const quillModules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['link', 'image', 'video'],
+      ['clean']
+    ],
   };
 
-  const normFile = (e: any) => {
-    if (Array.isArray(e)) {
-      return e;
-    }
-    return e?.fileList;
-  };
-
-  const handleUploadChange: UploadProps['onChange'] = (info: UploadChangeParam<UploadFile>) => {
-    setFileList(info.fileList.slice(-1)); // Keep only the latest file
-
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} file uploaded successfully`);
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} file upload failed.`);
-    }
-  };
-
-  const beforeUpload = (file: RcFile) => {
-    const isImage = /image\/(jpeg|png|gif|webp|jpg)/.test(file.type);
-    if (!isImage) {
-      message.error('You can only upload image files!');
-    }
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-      message.error('Image must be smaller than 2MB!');
-    }
-    return isImage && isLt2M;
-  };
-
-  // For custom upload handling (without actual upload during the change event)
-  const customRequest = ({ onSuccess }: any) => {
-    setTimeout(() => {
-      onSuccess("ok");
-    }, 0);
-  };
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Auto-generate slug if slug is empty
-    if (!form.getFieldValue('slug')) {
-      const title = e.target.value;
-      const slug = title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      form.setFieldValue('slug', slug);
-    }
-  };
+  const quillFormats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'list', 'bullet',
+    'link', 'image', 'video'
+  ];
 
   return (
-    <Card
-      title={pageTitle}
-      loading={loading}
-      extra={
-        <Space>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate('/posts')}
-          >
-            {t('common.back')}
-          </Button>
-          
-          {!isView && (
-            <>
-              <Button
-                type="default"
-                icon={<SaveOutlined />}
-                onClick={() => form.submit()}
-                loading={submitting}
-              >
-                {t('posts.form.saveAsDraft')}
-              </Button>
-              
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={() => {
-                  form.setFieldsValue({ status: 'published' });
-                  form.submit();
-                }}
-                loading={submitting}
-              >
-                {t('posts.form.publishNow')}
-              </Button>
-            </>
-          )}
-        </Space>
-      }
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleFinish}
-        initialValues={{
-          status: 'draft',
-          publishDate: null
-        }}
-        disabled={isView || loading}
+    <div className="post-form-container">
+      <Card 
+        title={mode === 'create' ? 'Create New Post' : 'Edit Post'} 
+        extra={
+          <Space>
+            <Button 
+              icon={<RollbackOutlined />} 
+              onClick={() => navigate('/posts')}
+            >
+              Back to Posts
+            </Button>
+          </Space>
+        }
+        loading={loading}
       >
-        <Row gutter={16}>
-          <Col xs={24} lg={16}>
-            <Form.Item
-              name="title"
-              label={t('posts.form.title')}
-              rules={[
-                { required: true, message: t('posts.validation.titleRequired') }
-              ]}
-            >
-              <Input placeholder={t('posts.form.titlePlaceholder')} onChange={handleTitleChange} />
-            </Form.Item>
-
-            <Form.Item
-              name="slug"
-              label={t('posts.form.slug')}
-              rules={[
-                { 
-                  pattern: /^[a-z0-9-]+$/, 
-                  message: t('posts.validation.slugFormat') 
-                }
-              ]}
-            >
-              <Input placeholder={t('posts.form.slugPlaceholder')} />
-            </Form.Item>
-            
-            <Form.Item
-              name="content"
-              label={t('posts.form.content')}
-            >
-              <ReactQuill
-                theme="snow"
-                placeholder={t('posts.editor.placeholder')}
-                modules={{
-                  toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-                    [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-                    ['link', 'image'],
-                    ['clean']
-                  ]
-                }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="excerpt"
-              label={t('posts.form.excerpt')}
-            >
-              <Input.TextArea 
-                rows={3} 
-                placeholder={t('posts.form.excerptPlaceholder')} 
-              />
-            </Form.Item>
-
-            <h3>{t('posts.form.seoSection')}</h3>
-            
-            <Form.Item
-              name="metaTitle"
-              label={t('posts.form.metaTitle')}
-            >
-              <Input />
-            </Form.Item>
-
-            <Form.Item
-              name="metaDescription"
-              label={t('posts.form.metaDescription')}
-            >
-              <Input.TextArea rows={3} />
-            </Form.Item>
-          </Col>
-          
-          <Col xs={24} lg={8}>
-            <Form.Item
-              name="categoryId"
-              label={t('posts.form.category')}
-              rules={[
-                { required: true, message: t('posts.validation.categoryRequired') }
-              ]}
-            >
-              <Select placeholder={t('posts.form.selectCategory')}>
-                {categories.map(category => (
-                  <Select.Option key={category.id} value={category.id}>
-                    {category.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="status"
-              label={t('posts.form.status')}
-            >
-              <Select onChange={handleStatusChange}>
-                <Select.Option value="draft">{t('posts.status.draft')}</Select.Option>
-                <Select.Option value="published">{t('posts.status.published')}</Select.Option>
-                <Select.Option value="scheduled">{t('posts.status.scheduled')}</Select.Option>
-                <Select.Option value="private">{t('posts.status.private')}</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="publishDate"
-              label={t('posts.form.publishDate')}
-              rules={[
-                { 
-                  required: status === 'scheduled',
-                  message: t('validation.required') 
-                }
-              ]}
-            >
-              <DatePicker 
-                showTime 
-                format="YYYY-MM-DD HH:mm:ss"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="tags"
-              label={t('posts.form.tags')}
-            >
-              <Input placeholder={t('posts.form.tagsPlaceholder')} />
-            </Form.Item>
-
-            <Form.Item
-              name="featuredImage"
-              label={t('posts.form.featuredImage')}
-              valuePropName="fileList"
-              getValueFromEvent={normFile}
-            >
-              <Upload
-                name="featuredImage"
-                listType="picture-card"
-                fileList={fileList}
-                beforeUpload={beforeUpload}
-                onChange={handleUploadChange}
-                customRequest={customRequest}
-                maxCount={1}
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmit}
+          initialValues={{
+            status: 'DRAFT',
+            featured: false,
+            allowComments: true
+          }}
+        >
+          <Tabs defaultActiveKey="1">
+            <TabPane tab="Basic Information" key="1">
+              <Form.Item
+                name="title"
+                label="Title"
+                rules={[{ required: true, message: 'Please enter the post title' }]}
               >
-                {fileList.length >= 1 ? null : (
-                  <div>
-                    <InboxOutlined />
-                    <div style={{ marginTop: 8 }}>{t('posts.form.uploadImage')}</div>
-                  </div>
-                )}
-              </Upload>
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form>
-    </Card>
+                <Input placeholder="Post title" />
+              </Form.Item>
+
+              <Form.Item
+                name="slug"
+                label="Slug (URL)"
+                rules={[{ pattern: /^[a-z0-9-]+$/, message: 'Slug can only contain lowercase letters, numbers, and hyphens' }]}
+              >
+                <Input placeholder="post-url-slug" />
+              </Form.Item>
+
+              <Form.Item
+                name="excerpt"
+                label="Excerpt"
+              >
+                <Input.TextArea 
+                  placeholder="Short excerpt or summary (optional)" 
+                  rows={3}
+                />
+              </Form.Item>
+
+              <Form.Item label="Content">
+                <ReactQuill
+                  theme="snow"
+                  modules={quillModules}
+                  formats={quillFormats}
+                  value={content}
+                  onChange={setContent}
+                  style={{ height: '300px', marginBottom: '50px' }}
+                />
+              </Form.Item>
+            </TabPane>
+
+            <TabPane tab="Categories & Settings" key="2">
+              <Form.Item
+                name="categoryIds"
+                label="Categories"
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Select categories"
+                  optionFilterProp="children"
+                >
+                  {categories && categories.length > 0 ? categories.map(category => (
+                    <Option key={category.id} value={category.id}>
+                      {category.name}
+                    </Option>
+                  )) : null}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="status"
+                label="Status"
+                rules={[{ required: true, message: 'Please select a status' }]}
+              >
+                <Select placeholder="Select status">
+                  <Option value="DRAFT">Draft</Option>
+                  <Option value="PUBLISHED">Published</Option>
+                  <Option value="SCHEDULED">Scheduled</Option>
+                  <Option value="ARCHIVED">Archived</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="publishedAt"
+                label="Publication Date"
+                dependencies={['status']}
+                rules={[
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (getFieldValue('status') !== 'SCHEDULED' || value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Please set a publication date for scheduled posts'));
+                    },
+                  }),
+                ]}
+              >
+                <DatePicker 
+                  showTime
+                  format="YYYY-MM-DD HH:mm:ss"
+                  placeholder="Select publication date and time"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="featuredImageUrl"
+                label="Featured Image URL"
+              >
+                <Input 
+                  placeholder="URL of featured image" 
+                  addonAfter={
+                    <FileImageOutlined 
+                      onClick={() => setImageModalVisible(true)} 
+                      style={{ cursor: 'pointer' }}
+                    />
+                  }
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="featured"
+                label="Featured Post"
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+
+              <Form.Item
+                name="allowComments"
+                label="Allow Comments"
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </TabPane>
+
+            <TabPane tab="SEO" key="3">
+              <Form.Item
+                name="metaTitle"
+                label="Meta Title"
+              >
+                <Input placeholder="SEO title (if different from post title)" />
+              </Form.Item>
+
+              <Form.Item
+                name="metaDescription"
+                label="Meta Description"
+              >
+                <Input.TextArea 
+                  placeholder="SEO description" 
+                  rows={4}
+                />
+              </Form.Item>
+            </TabPane>
+          </Tabs>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              icon={<SaveOutlined />}
+              loading={loading}
+            >
+              {mode === 'create' ? 'Create Post' : 'Update Post'}
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
+    </div>
   );
 };
 

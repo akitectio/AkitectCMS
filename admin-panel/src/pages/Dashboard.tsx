@@ -1,21 +1,45 @@
-import { InfoBox } from '@app/components/info-box/InfoBox';
-import { useAppSelector } from '@app/store/store';
-import { ContentHeader, SmallBox } from '@components';
 import {
-    faBookmark,
-    faCalendarCheck,
-    faCartShopping,
-    faChartPie,
-    faChartSimple,
-    faClockRotateLeft,
-    faEnvelope,
-    faUser,
-    faUserPlus,
-    faUsers
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+  BellOutlined,
+  BookOutlined,
+  CalendarOutlined,
+  FileOutlined,
+  HistoryOutlined,
+  LineChartOutlined,
+  MailOutlined,
+  PieChartOutlined,
+  ShoppingCartOutlined,
+  UserAddOutlined,
+  UserOutlined
+} from '@ant-design/icons';
+import { useAppSelector } from '@app/store/store';
+import { Avatar, Button, Card, Col, Divider, List, Progress, Row, Statistic, Table, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
-import { Card } from 'react-bootstrap';
+import styled from 'styled-components';
+
+const { Title, Text } = Typography;
+
+const StyledStatCard = styled(Card)`
+  text-align: center;
+  .ant-statistic-title {
+    font-size: 16px;
+  }
+  .anticon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+`;
+
+const IconWrapper = styled.div<{ $bgColor: string }>`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: ${props => props.$bgColor};
+  color: white;
+  font-size: 20px;
+`;
 
 const Dashboard = () => {
   const { currentUser } = useAppSelector(state => state.auth);
@@ -23,12 +47,84 @@ const Dashboard = () => {
   
   // Example data for recent activities
   const recentActivities = [
-    { id: 1, activity: 'New user registered', time: '10 mins ago', icon: faUserPlus, color: 'success' },
-    { id: 2, activity: 'System updated', time: '1 hour ago', icon: faClockRotateLeft, color: 'info' },
-    { id: 3, activity: 'New order #43242', time: '3 hours ago', icon: faCartShopping, color: 'warning' },
-    { id: 4, activity: 'User John updated profile', time: '1 day ago', icon: faUser, color: 'primary' }
+    { id: 1, activity: 'New user registered', time: '10 mins ago', icon: <UserAddOutlined />, color: '#52c41a' },
+    { id: 2, activity: 'System updated', time: '1 hour ago', icon: <HistoryOutlined />, color: '#1890ff' },
+    { id: 3, activity: 'New order #43242', time: '3 hours ago', icon: <ShoppingCartOutlined />, color: '#faad14' },
+    { id: 4, activity: 'User John updated profile', time: '1 day ago', icon: <UserOutlined />, color: '#1890ff' }
   ];
   
+  // Table data for services
+  const servicesData = [
+    {
+      key: '1',
+      service: 'Content Management',
+      usage: 55,
+      status: 'Active',
+      color: '#ff4d4f'
+    },
+    {
+      key: '2',
+      service: 'User Management',
+      usage: 70,
+      status: 'Active',
+      color: '#faad14'
+    },
+    {
+      key: '3',
+      service: 'Media Library',
+      usage: 30,
+      status: 'Active',
+      color: '#1890ff'
+    },
+    {
+      key: '4',
+      service: 'Settings',
+      usage: 90,
+      status: 'Active',
+      color: '#52c41a'
+    }
+  ];
+
+  // Table columns for services
+  const columns = [
+    {
+      title: 'Service',
+      dataIndex: 'service',
+      key: 'service',
+    },
+    {
+      title: 'Usage',
+      dataIndex: 'usage',
+      key: 'usage',
+      render: (usage: number, record: any) => (
+        <Progress percent={usage} strokeColor={record.color} size="small" />
+      )
+    },
+    {
+      title: 'Percentage',
+      key: 'percentage',
+      render: (record: any) => (
+        <Tag color={record.color}>{record.usage}%</Tag>
+      )
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      dataIndex: 'status',
+      render: (status: string) => (
+        <Tag color="success">{status}</Tag>
+      )
+    },
+  ];
+
+  // Mock data for users
+  const users = Array.from({ length: 8 }, (_, index) => ({
+    id: index + 1,
+    name: `User ${index + 1}`,
+    avatar: '/img/default-profile.png',
+    date: 'Today'
+  }));
+
   // Update date every minute
   useEffect(() => {
     const timer = setInterval(() => setDate(new Date()), 60000);
@@ -36,308 +132,230 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div>
-      <ContentHeader title="Dashboard" />
+    <div style={{ padding: '24px 0' }}>
+      <Title level={2} style={{ marginBottom: '24px' }}>Dashboard</Title>
 
-      <section className="content">
-        <div className="container-fluid">
-          {/* Welcome Section */}
-          <div className="row mb-4">
-            <div className="col-12">
-              <Card>
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <h4 className="m-0">Welcome, {currentUser?.name || 'Admin User'}!</h4>
-                      <p className="text-muted m-0">
-                        {date.toLocaleDateString('en-US', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                    <div>
-                      <button className="btn btn-primary">
-                        <FontAwesomeIcon icon={faCalendarCheck} className="mr-2" />
-                        View Schedule
-                      </button>
-                    </div>
+      {/* Welcome Section */}
+      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+        <Col span={24}>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <Title level={4} style={{ margin: 0 }}>Welcome, {currentUser?.name || 'Admin User'}!</Title>
+                <Text type="secondary">
+                  {date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </Text>
+              </div>
+              <Button type="primary" icon={<CalendarOutlined />}>
+                View Schedule
+              </Button>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Statistics Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+        <Col xs={24} sm={12} lg={6}>
+          <StyledStatCard>
+            <ShoppingCartOutlined style={{ color: '#1890ff' }} />
+            <Statistic title="New Orders" value={150} />
+            <Button type="link" style={{ padding: 0 }}>More info</Button>
+          </StyledStatCard>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <StyledStatCard>
+            <LineChartOutlined style={{ color: '#52c41a' }} />
+            <Statistic title="Bounce Rate" value={53} suffix="%" />
+            <Button type="link" style={{ padding: 0 }}>More info</Button>
+          </StyledStatCard>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <StyledStatCard>
+            <UserAddOutlined style={{ color: '#faad14' }} />
+            <Statistic title="User Registrations" value={44} />
+            <Button type="link" style={{ padding: 0 }}>More info</Button>
+          </StyledStatCard>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <StyledStatCard>
+            <PieChartOutlined style={{ color: '#ff4d4f' }} />
+            <Statistic title="Unique Visitors" value={65} />
+            <Button type="link" style={{ padding: 0 }}>More info</Button>
+          </StyledStatCard>
+        </Col>
+      </Row>
+
+      {/* Main Dashboard Content */}
+      <Row gutter={[16, 16]}>
+        {/* Left column - Chart and Table */}
+        <Col xs={24} lg={16}>
+          <Card 
+            title={
+              <span>
+                <LineChartOutlined style={{ marginRight: 8 }} />
+                Site Analytics
+              </span>
+            }
+            style={{ marginBottom: '16px' }}
+          >
+            <div style={{ height: '300px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#fafafa' }}>
+              <Text type="secondary">Chart Placeholder - Analytics Data</Text>
+            </div>
+          </Card>
+
+          {/* Most Used Services */}
+          <Card 
+            title={
+              <span>
+                <LineChartOutlined style={{ marginRight: 8 }} />
+                Most Used Services
+              </span>
+            }
+          >
+            <Table 
+              dataSource={servicesData} 
+              columns={columns} 
+              pagination={false} 
+              size="middle"
+            />
+          </Card>
+        </Col>
+
+        {/* Right column - Activity Feed and Users */}
+        <Col xs={24} lg={8}>
+          {/* Recent Activities */}
+          <Card 
+            title={
+              <span>
+                <HistoryOutlined style={{ marginRight: 8 }} />
+                Recent Activities
+              </span>
+            }
+            style={{ marginBottom: '16px' }}
+          >
+            <List
+              itemLayout="horizontal"
+              dataSource={recentActivities}
+              renderItem={item => (
+                <List.Item>
+                  <List.Item.Meta
+                    avatar={<IconWrapper $bgColor={item.color}>{item.icon}</IconWrapper>}
+                    title={<span>{item.activity} <Tag style={{ float: 'right' }}>{item.time}</Tag></span>}
+                    description={`Activity ID: #${item.id}`}
+                  />
+                </List.Item>
+              )}
+            />
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <Button type="link">View All Activities</Button>
+            </div>
+          </Card>
+
+          {/* Latest Users */}
+          <Card 
+            title={
+              <span>
+                <UserOutlined style={{ marginRight: 8 }} />
+                Latest Users
+              </span>
+            }
+          >
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center' }}>
+              {users.map(user => (
+                <div key={user.id} style={{ textAlign: 'center', width: '70px' }}>
+                  <Avatar 
+                    src={user.avatar} 
+                    size={60}
+                    style={{ border: '2px solid #f0f0f0' }} 
+                  />
+                  <div>
+                    <Button type="link" style={{ padding: '4px 0', height: 'auto' }}>{user.name}</Button>
                   </div>
-                </Card.Body>
-              </Card>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>{user.date}</Text>
+                </div>
+              ))}
             </div>
-          </div>
+            <Divider style={{ margin: '16px 0' }} />
+            <div style={{ textAlign: 'center' }}>
+              <Button type="link">View All Users</Button>
+            </div>
+          </Card>
+        </Col>
+      </Row>
 
-          {/* Statistics Boxes */}
-          <div className="row">
-            <div className="col-lg-3 col-6">
-              <SmallBox
-                title="New Orders"
-                text="150"
-                navigateTo="#"
-                variant="info"
-                icon={{
-                  content: (
-                    <FontAwesomeIcon
-                      icon={faCartShopping}
-                      style={{ fontSize: '62px' }}
-                    />
-                  ),
-                }}
-              />
-            </div>
-            <div className="col-lg-3 col-6">
-              <SmallBox
-                title="Bounce Rate"
-                text="53 %"
-                navigateTo="#"
-                variant="success"
-                icon={{
-                  content: (
-                    <FontAwesomeIcon
-                      icon={faChartSimple}
-                      style={{ fontSize: '62px' }}
-                    />
-                  ),
-                }}
-              />
-            </div>
-            <div className="col-lg-3 col-6">
-              <SmallBox
-                title="User Registrations"
-                text="44"
-                navigateTo="#"
-                variant="warning"
-                icon={{
-                  content: (
-                    <FontAwesomeIcon
-                      icon={faUserPlus}
-                      style={{ fontSize: '62px' }}
-                    />
-                  ),
-                }}
-              />
-            </div>
-            <div className="col-lg-3 col-6">
-              <SmallBox
-                title="Unique Visitors"
-                text="65"
-                navigateTo="#"
-                variant="danger"
-                icon={{
-                  content: (
-                    <FontAwesomeIcon
-                      icon={faChartPie}
-                      style={{ fontSize: '62px' }}
-                    />
-                  ),
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Main Dashboard Content */}
-          <div className="row">
-            {/* Left column - Chart */}
-            <div className="col-lg-8">
-              <Card className="card-primary card-outline">
-                <Card.Header>
-                  <h3 className="card-title">
-                    <i className="fas fa-chart-bar mr-1"></i>
-                    Site Analytics
-                  </h3>
-                  <div className="card-tools">
-                    <button type="button" className="btn btn-tool" data-card-widget="collapse">
-                      <i className="fas fa-minus"></i>
-                    </button>
-                    <button type="button" className="btn btn-tool" data-card-widget="remove">
-                      <i className="fas fa-times"></i>
-                    </button>
-                  </div>
-                </Card.Header>
-                <Card.Body>
-                  <div className="chart">
-                    <div style={{height: '300px', width: '100%'}} className="d-flex justify-content-center align-items-center">
-                      <h5 className="text-muted">Chart Placeholder - Analytics Data</h5>
-                    </div>
-                  </div>
-                </Card.Body>
-              </Card>
-
-              {/* Most Used Services */}
-              <Card className="card-success card-outline">
-                <Card.Header>
-                  <h3 className="card-title">
-                    <i className="fas fa-table mr-1"></i>
-                    Most Used Services
-                  </h3>
-                </Card.Header>
-                <Card.Body className="p-0">
-                  <table className="table table-hover">
-                    <thead>
-                      <tr>
-                        <th>Service</th>
-                        <th>Usage</th>
-                        <th>Status</th>
-                        <th style={{ width: '40px' }}>Label</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>Content Management</td>
-                        <td>
-                          <div className="progress progress-xs">
-                            <div className="progress-bar progress-bar-danger" style={{ width: '55%' }}></div>
-                          </div>
-                        </td>
-                        <td><span className="badge bg-danger">55%</span></td>
-                        <td><span className="badge bg-success">Active</span></td>
-                      </tr>
-                      <tr>
-                        <td>User Management</td>
-                        <td>
-                          <div className="progress progress-xs">
-                            <div className="progress-bar bg-warning" style={{ width: '70%' }}></div>
-                          </div>
-                        </td>
-                        <td><span className="badge bg-warning">70%</span></td>
-                        <td><span className="badge bg-success">Active</span></td>
-                      </tr>
-                      <tr>
-                        <td>Media Library</td>
-                        <td>
-                          <div className="progress progress-xs">
-                            <div className="progress-bar bg-primary" style={{ width: '30%' }}></div>
-                          </div>
-                        </td>
-                        <td><span className="badge bg-primary">30%</span></td>
-                        <td><span className="badge bg-success">Active</span></td>
-                      </tr>
-                      <tr>
-                        <td>Settings</td>
-                        <td>
-                          <div className="progress progress-xs">
-                            <div className="progress-bar bg-success" style={{ width: '90%' }}></div>
-                          </div>
-                        </td>
-                        <td><span className="badge bg-success">90%</span></td>
-                        <td><span className="badge bg-success">Active</span></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </Card.Body>
-              </Card>
-            </div>
-
-            {/* Right column - Feed */}
-            <div className="col-lg-4">
-              {/* Recent Activities */}
-              <Card className="card-primary card-outline">
-                <Card.Header>
-                  <h3 className="card-title">
-                    <i className="fas fa-history mr-1"></i>
-                    Recent Activities
-                  </h3>
-                </Card.Header>
-                <Card.Body className="p-0">
-                  <ul className="products-list product-list-in-card pl-2 pr-2">
-                    {recentActivities.map(activity => (
-                      <li className="item" key={activity.id}>
-                        <div className="product-img">
-                          <div className={`bg-${activity.color} d-flex justify-content-center align-items-center`} style={{width: '50px', height: '50px', borderRadius: '50%'}}>
-                            <FontAwesomeIcon icon={activity.icon} style={{fontSize: '20px', color: 'white'}} />
-                          </div>
-                        </div>
-                        <div className="product-info">
-                          <a href="#" className="product-title">
-                            {activity.activity}
-                            <span className="badge badge-warning float-right">{activity.time}</span>
-                          </a>
-                          <span className="product-description">
-                            Activity ID: #{activity.id}
-                          </span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </Card.Body>
-                <Card.Footer className="text-center">
-                  <a href="#" className="uppercase">View All Activities</a>
-                </Card.Footer>
-              </Card>
-
-              {/* Latest Users */}
-              <Card className="card-info card-outline">
-                <Card.Header>
-                  <h3 className="card-title">
-                    <FontAwesomeIcon icon={faUsers} className="mr-1" />
-                    Latest Users
-                  </h3>
-                </Card.Header>
-                <Card.Body className="p-0">
-                  <ul className="users-list clearfix">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((user) => (
-                      <li key={user} className="text-center">
-                        <img 
-                          src="/img/default-profile.png" 
-                          alt="User Image" 
-                          style={{width: '60px', height: '60px'}}
-                          className="img-circle img-bordered-sm" 
-                        />
-                        <a className="users-list-name" href="#">User {user}</a>
-                        <span className="users-list-date">Today</span>
-                      </li>
-                    ))}
-                  </ul>
-                </Card.Body>
-                <Card.Footer className="text-center">
-                  <a href="#" className="uppercase">View All Users</a>
-                </Card.Footer>
-              </Card>
-            </div>
-          </div>
-
-          {/* Info Boxes */}
-          <div className="row">
-            <div className="col-lg-3 col-md-6 col-sm-12">
-              <InfoBox
-                title="Messages"
-                text="1,410"
-                icon={{
-                  content: <FontAwesomeIcon icon={faEnvelope} />,
-                  variant: 'info',
-                }}
-              />
-            </div>
-            <div className="col-lg-3 col-md-6 col-sm-12">
-              <InfoBox
-                variant="success"
-                title="Bookmarks"
-                text="928"
-                icon={{ content: <FontAwesomeIcon icon={faBookmark} /> }}
-              />
-            </div>
-            <div className="col-lg-3 col-md-6 col-sm-12">
-              <InfoBox
-                variant="warning"
-                title="Notifications"
-                text="257"
-                icon={{ content: <FontAwesomeIcon icon={faEnvelope} /> }}
-              />
-            </div>
-            <div className="col-lg-3 col-md-6 col-sm-12">
-              <InfoBox
-                variant="danger"
-                title="Reports"
-                text="128"
-                icon={{ content: <FontAwesomeIcon icon={faBookmark} /> }}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Info Boxes Row */}
+      <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Row gutter={16} align="middle">
+              <Col span={8}>
+                <Avatar 
+                  size={64} 
+                  icon={<MailOutlined />} 
+                  style={{ backgroundColor: '#1890ff' }} 
+                />
+              </Col>
+              <Col span={16}>
+                <Statistic title="Messages" value={1410} />
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Row gutter={16} align="middle">
+              <Col span={8}>
+                <Avatar 
+                  size={64} 
+                  icon={<BookOutlined />} 
+                  style={{ backgroundColor: '#52c41a' }} 
+                />
+              </Col>
+              <Col span={16}>
+                <Statistic title="Bookmarks" value={928} />
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Row gutter={16} align="middle">
+              <Col span={8}>
+                <Avatar 
+                  size={64} 
+                  icon={<BellOutlined />} 
+                  style={{ backgroundColor: '#faad14' }} 
+                />
+              </Col>
+              <Col span={16}>
+                <Statistic title="Notifications" value={257} />
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Row gutter={16} align="middle">
+              <Col span={8}>
+                <Avatar 
+                  size={64} 
+                  icon={<FileOutlined />} 
+                  style={{ backgroundColor: '#ff4d4f' }} 
+                />
+              </Col>
+              <Col span={16}>
+                <Statistic title="Reports" value={128} />
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 };

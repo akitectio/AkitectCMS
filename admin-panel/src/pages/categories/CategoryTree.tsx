@@ -1,7 +1,13 @@
-import { faCaretDown, faCaretRight, faEdit, faFolder, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+    CaretDownOutlined,
+    CaretRightOutlined,
+    DeleteOutlined,
+    EditOutlined,
+    FolderOpenOutlined,
+    FolderOutlined
+} from '@ant-design/icons';
+import { Button, Empty } from 'antd';
 import { useState } from 'react';
-import { Button } from 'react-bootstrap';
 import { Category } from '../../types/category';
 import './CategoryTree.css';
 
@@ -53,51 +59,46 @@ const CategoryTreeNode = ({
       >
         <div className="toggle-icon" onClick={handleToggle}>
           {hasChildren ? (
-            <FontAwesomeIcon 
-              icon={expanded ? faCaretDown : faCaretRight} 
-              color="#888" 
-              size="sm" 
-            />
+            expanded ? <CaretDownOutlined style={{ color: '#888' }} /> : <CaretRightOutlined style={{ color: '#888' }} />
           ) : (
             <span style={{ width: '1rem', display: 'inline-block' }}></span>
           )}
         </div>
         
         <div className="category-icon">
-          <FontAwesomeIcon 
-            icon={expanded && hasChildren ? faFolderOpen : faFolder} 
-            color="#ffc107"
-          />
+          {expanded && hasChildren ? (
+            <FolderOpenOutlined style={{ color: '#ffc107' }} />
+          ) : (
+            <FolderOutlined style={{ color: '#ffc107' }} />
+          )}
         </div>
         
         <span className="category-name">{category.name}</span>
         
         <div className="category-actions">
           <Button
-            variant="outline-info"
-            size="sm"
-            className="btn-icon mr-1"
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
             onClick={(e) => {
               e.stopPropagation();
               onSelectCategory(category);
             }}
             title="Edit"
-          >
-            <FontAwesomeIcon icon={faEdit} />
-          </Button>
+            style={{ marginRight: 8 }}
+          />
           
           <Button
-            variant="outline-danger"
-            size="sm"
-            className="btn-icon"
+            type="text"
+            danger
+            size="small"
+            icon={<DeleteOutlined />}
             onClick={(e) => {
               e.stopPropagation();
               onDeleteCategory(category);
             }}
             title="Delete"
-          >
-            <FontAwesomeIcon icon={faTrash} />
-          </Button>
+          />
         </div>
       </div>
       
@@ -166,9 +167,7 @@ const CategoryTree = ({
           />
         ))
       ) : (
-        <div className="text-center text-muted pt-4">
-          No categories found. Create your first category.
-        </div>
+        <Empty description="No categories found. Create your first category." />
       )}
     </div>
   );

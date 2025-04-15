@@ -1,15 +1,16 @@
-import PostForm from '@app/pages/posts/PostForm';
-import Posts from '@app/pages/posts/Posts';
-import React from 'react';
+import CreatePost from '@app/pages/posts/CreatePost';
+import EditPost from '@app/pages/posts/EditPost';
+import PostList from '@app/pages/posts/PostList';
 import { Route, Routes } from 'react-router-dom';
 
-const PostsRoutes: React.FC = () => (
-  <Routes>
-    <Route index element={<Posts />} />
-    <Route path="add" element={<PostForm />} />
-    <Route path="edit/:id" element={<PostForm />} />
-    <Route path="view/:id" element={<PostForm isView />} />
-  </Routes>
-);
+const PostsRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<PostList />} />
+      <Route path="/create" element={<CreatePost />} />
+      <Route path="/edit/:id" element={<EditPost />} />
+    </Routes>
+  );
+};
 
 export default PostsRoutes;

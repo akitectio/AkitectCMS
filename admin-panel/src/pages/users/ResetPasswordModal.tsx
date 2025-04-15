@@ -1,95 +1,77 @@
-import { useState } from 'react';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { Button, Form, Input, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
 
 interface ResetPasswordModalProps {
-  show: boolean;
-  onHide: () => void;
+  open: boolean;
+  onCancel: () => void;
   onSubmit: (password: string) => void;
 }
 
 export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
-  show,
-  onHide,
+  open,
+  onCancel,
   onSubmit,
 }) => {
   const { t } = useTranslation();
-  const [showPassword, setShowPassword] = useState(false);
+  const [form] = Form.useForm();
 
-  const validationSchema = Yup.object().shape({
-    password: Yup.string()
-      .min(6, t('validation.passwordMinLength'))
-      .required(t('validation.required')),
-    confirmPassword: Yup.string()
-      .oneOf([Yup.ref('password')], t('validation.passwordsMustMatch'))
-      .required(t('validation.required')),
-  });
+  const handleSubmit = (values: { password: string; confirmPassword: string }) => {
+    onSubmit(values.password);
+  };
 
   return (
-    <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>{t('users.modals.resetPasswordTitle')}</Modal.Title>
-      </Modal.Header>
-      <Formik
-        initialValues={{ password: '', confirmPassword: '' }}
-        validationSchema={validationSchema}
-        onSubmit={(values) => {
-          onSubmit(values.password);
-        }}
+    <Modal
+      title={t('users.modals.resetPasswordTitle')}
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      maskClosable={false}
+      destroyOnClose
+    >
+      <Form 
+        form={form} 
+        layout="vertical" 
+        onFinish={handleSubmit}
+        preserve={false}
       >
-        {({ handleSubmit, handleChange, values, touched, errors }) => (
-          <Form onSubmit={handleSubmit}>
-            <Modal.Body>
-              <Form.Group>
-                <Form.Label>{t('users.fields.newPassword')}</Form.Label>
-                <div className="input-group">
-                  <Form.Control
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={values.password}
-                    onChange={handleChange}
-                    isInvalid={touched.password && !!errors.password}
-                  />
-                  <div className="input-group-append">
-                    <Button
-                      variant="outline-secondary"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                    </Button>
-                  </div>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.password}
-                  </Form.Control.Feedback>
-                </div>
-              </Form.Group>
-              <Form.Group>
-                <Form.Label>{t('users.fields.confirmPassword')}</Form.Label>
-                <Form.Control
-                  type={showPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  value={values.confirmPassword}
-                  onChange={handleChange}
-                  isInvalid={touched.confirmPassword && !!errors.confirmPassword}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.confirmPassword}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={onHide}>
-                {t('common.cancel')}
-              </Button>
-              <Button variant="primary" type="submit">
-                {t('common.confirm')}
-              </Button>
-            </Modal.Footer>
-          </Form>
-        )}
-      </Formik>
+        <Form.Item
+          name="password"
+          label={t('users.fields.newPassword')}
+          rules={[
+            { required: true, message: t('validation.required') },
+            { min: 6, message: t('validation.passwordMinLength') }
+          ]}
+        >
+          <Input.Password />
+        </Form.Item>
+        
+        <Form.Item
+          name="confirmPassword"
+          label={t('users.fields.confirmPassword')}
+          rules={[
+            { required: true, message: t('validation.required') },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value || getFieldValue('password') === value) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error(t('validation.passwordsMustMatch')));
+              },
+            }),
+          ]}
+        >
+          <Input.Password />
+        </Form.Item>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+          <Button style={{ marginRight: 8 }} onClick={onCancel}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="primary" htmlType="submit">
+            {t('common.confirm')}
+          </Button>
+        </div>
+      </Form>
     </Modal>
   );
 };

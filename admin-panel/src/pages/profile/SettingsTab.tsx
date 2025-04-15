@@ -1,97 +1,44 @@
-import { Button } from '@profabric/react-components';
+import { Button, Checkbox, Form, Input, Typography } from 'antd';
 import { Link } from 'react-router-dom';
+
+const { TextArea } = Input;
+const { Text } = Typography;
 
 const SettingsTab = ({ isActive }: { isActive: boolean }) => {
   return (
-    <div className={`tab-pane ${isActive ? 'active' : ''}`}>
-      <form className="form-horizontal">
-        <div className="form-group row">
-          <label htmlFor="inputName" className="col-sm-2 col-form-label">
-            Name
-          </label>
-          <div className="col-sm-10">
-            <input
-              type="email"
-              className="form-control"
-              id="inputName"
-              placeholder="Name"
-            />
-          </div>
-        </div>
-        <div className="form-group row">
-          <label htmlFor="inputEmail" className="col-sm-2 col-form-label">
-            Email
-          </label>
-          <div className="col-sm-10">
-            <input
-              type="email"
-              className="form-control"
-              id="inputEmail"
-              placeholder="Email"
-            />
-          </div>
-        </div>
-        <div className="form-group row">
-          <label htmlFor="inputName2" className="col-sm-2 col-form-label">
-            Name
-          </label>
-          <div className="col-sm-10">
-            <input
-              type="text"
-              className="form-control"
-              id="inputName2"
-              placeholder="Name"
-            />
-          </div>
-        </div>
-        <div className="form-group row">
-          <label htmlFor="inputExperience" className="col-sm-2 col-form-label">
-            Experience
-          </label>
-          <div className="col-sm-10">
-            <textarea
-              className="form-control"
-              id="inputExperience"
-              placeholder="Experience"
-              defaultValue=""
-            />
-          </div>
-        </div>
-        <div className="form-group row">
-          <label htmlFor="inputSkills" className="col-sm-2 col-form-label">
-            Skills
-          </label>
-          <div className="col-sm-10">
-            <input
-              type="text"
-              className="form-control"
-              id="inputSkills"
-              placeholder="Skills"
-            />
-          </div>
-        </div>
-        <div className="form-group row">
-          <div className="offset-sm-2 col-sm-10">
-            <div className="icheck-primary">
-              <input
-                type="checkbox"
-                id="agreeTerms"
-                name="terms"
-                defaultValue="agree"
-              />
-              <label htmlFor="agreeTerms">
-                <span>I agree to the </span>
-                <Link to="/">terms and condition</Link>
-              </label>
-            </div>
-          </div>
-        </div>
-        <div className="form-group row">
-          <div className="offset-sm-2 col-sm-10">
-            <Button variant="danger">Submit</Button>
-          </div>
-        </div>
-      </form>
+    <div style={{ display: isActive ? 'block' : 'none' }}>
+      <Form layout="horizontal" labelCol={{ span: 6 }} wrapperCol={{ span: 18 }}>
+        <Form.Item label="Name" name="name">
+          <Input placeholder="Name" />
+        </Form.Item>
+        
+        <Form.Item label="Email" name="email">
+          <Input type="email" placeholder="Email" />
+        </Form.Item>
+        
+        <Form.Item label="Display Name" name="displayName">
+          <Input placeholder="Display Name" />
+        </Form.Item>
+        
+        <Form.Item label="Experience" name="experience">
+          <TextArea placeholder="Experience" rows={4} />
+        </Form.Item>
+        
+        <Form.Item label="Skills" name="skills">
+          <Input placeholder="Skills" />
+        </Form.Item>
+        
+        <Form.Item wrapperCol={{ offset: 6, span: 18 }}>
+          <Checkbox name="terms">
+            <span>I agree to the </span>
+            <Link to="/">terms and condition</Link>
+          </Checkbox>
+        </Form.Item>
+        
+        <Form.Item wrapperCol={{ offset: 6, span: 18 }}>
+          <Button type="primary" htmlType="submit">Submit</Button>
+        </Form.Item>
+      </Form>
     </div>
   );
 };

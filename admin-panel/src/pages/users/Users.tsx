@@ -1,25 +1,37 @@
+import {
+  DeleteOutlined,
+  EditOutlined,
+  KeyOutlined,
+  LockOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  UnlockOutlined
+} from '@ant-design/icons';
 import { ConfirmModal } from '@app/components/ConfirmModal';
 import ContentHeader from '@app/components/content-header/ContentHeader';
-import { OverlayLoading } from '@app/components/OverlayLoading';
 import userService from '@app/services/users';
 import { User, UserStatus } from '@app/types/user';
-import {
-  faEdit,
-  faEye,
-  faKey,
-  faLock,
-  faLockOpen,
-  faPlus,
-  faSearch,
-  faTrash
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button, Card, Col, Input, Row, Space, Switch, Table, Tag, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
-import { Button, Card, Col, Form, InputGroup, Row, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import styled from 'styled-components';
 import { ResetPasswordModal } from './ResetPasswordModal';
+
+const SearchWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  
+  .ant-input-affix-wrapper {
+    width: 250px;
+  }
+`;
+
+const ActionButtonsWrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
 
 const Users = () => {
   const { t } = useTranslation();
@@ -27,9 +39,8 @@ const Users = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [totalItems, setTotalItems] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [pageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [sortBy] = useState<string>('id');
   const [sortDirection] = useState<string>('asc');
   
@@ -41,12 +52,12 @@ const Users = () => {
   const [confirmModalData, setConfirmModalData] = useState<{ userId: number, currentStatus: boolean } | null>(null);
   
   // Load users
-  const fetchUsers = async (page = currentPage) => {
+  const fetchUsers = async (page = currentPage, pageSizeParam = pageSize) => {
     try {
       setLoading(true);
       const response = await userService.getAllUsers({
         page,
-        size: pageSize,
+        size: pageSizeParam,
         sortBy,
         direction: sortDirection,
         search: searchTerm,
@@ -56,14 +67,12 @@ const Users = () => {
       setUsers(response?.users || []);
       setCurrentPage(response?.currentPage || 0);
       setTotalItems(response?.totalItems || 0);
-      setTotalPages(response?.totalPages || 0);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error(t('users.errors.fetchFailed'));
       // Set default values when error occurs
       setUsers([]);
       setTotalItems(0);
-      setTotalPages(0);
     } finally {
       setLoading(false);
     }
@@ -79,10 +88,21 @@ const Users = () => {
     fetchUsers(0);
   };
   
+  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    if (e.target.value === '') {
+      // Clear search
+      setCurrentPage(0);
+      fetchUsers(0, pageSize);
+    }
+  };
+  
   // Handle page change
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    fetchUsers(page);
+  const handlePageChange = (page: number, pageSize?: number) => {
+    const newPage = page - 1; // Convert to 0-based for API
+    setCurrentPage(newPage);
+    if (pageSize) setPageSize(pageSize);
+    fetchUsers(newPage, pageSize || 10);
   };
   
   // Handle delete user
@@ -166,219 +186,158 @@ const Users = () => {
       setSelectedUserId(null);
     }
   };
+
+  // Table columns
+  const columns = [
+    {
+      title: t('users.fields.username'),
+      dataIndex: 'username',
+      key: 'username',
+    },
+    {
+      title: t('users.fields.email'),
+      dataIndex: 'email',
+      key: 'email',
+    },
+    {
+      title: t('users.fields.fullName'),
+      dataIndex: 'fullName',
+      key: 'fullName',
+      render: (text: string, record: User) => text || record.name || '-',
+    },
+    {
+      title: t('users.fields.status'),
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: UserStatus) => (
+        <Tag color={status === UserStatus.ACTIVE ? 'success' : 'error'}>
+          {status || UserStatus.ACTIVE}
+        </Tag>
+      ),
+    },
+    {
+      title: t('users.fields.createdAt'),
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => date ? new Date(date).toLocaleDateString() : '-',
+    },
+    {
+      title: t('users.fields.superAdmin'),
+      dataIndex: 'superAdmin',
+      key: 'superAdmin',
+      render: (superAdmin: boolean, record: User) => (
+        <Switch
+          checked={superAdmin}
+          onChange={() => handleToggleSuperAdmin(record.id, superAdmin)}
+          checkedChildren={t('common.yes')}
+          unCheckedChildren={t('common.no')}
+        />
+      ),
+    },
+    {
+      title: t('users.fields.actions'),
+      key: 'actions',
+      render: (_, record: User) => (
+        <Space>
+          <Link to={`/users/${record.id}/edit`}>
+            <Tooltip title={t('users.actions.edit')}>
+              <Button type="default" icon={<EditOutlined />} size="small" />
+            </Tooltip>
+          </Link>
+          
+          <Tooltip title={record.status === UserStatus.LOCKED ? t('users.actions.unlock') : t('users.actions.lock')}>
+            <Button 
+              type="primary" 
+              danger={record.status !== UserStatus.LOCKED}
+              icon={record.status === UserStatus.LOCKED ? <UnlockOutlined /> : <LockOutlined />} 
+              size="small"
+              onClick={() => handleToggleLock(record.id, record.status || UserStatus.ACTIVE)}
+            />
+          </Tooltip>
+          
+          <Tooltip title={t('users.actions.resetPassword')}>
+            <Button 
+              type="default" 
+              icon={<KeyOutlined />} 
+              size="small"
+              onClick={() => {
+                setSelectedUserId(record.id);
+                setShowResetPasswordModal(true);
+              }}
+            />
+          </Tooltip>
+          
+          <Tooltip title={t('users.actions.delete')}>
+            <Button 
+              danger 
+              icon={<DeleteOutlined />} 
+              size="small"
+              onClick={() => {
+                setSelectedUserId(record.id);
+                setShowDeleteModal(true);
+              }}
+            />
+          </Tooltip>
+        </Space>
+      ),
+    },
+  ];
   
   return (
     <>
       <ContentHeader title={t('users.title')} />
       
-      <section className="content">
-        <div className="container-fluid">
-          <Card>
-            <Card.Header>
-              <Row>
-                <Col md={6}>
-                  <InputGroup>
-                    <Form.Control
-                      placeholder={t('users.search')}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    />
-                    <InputGroup.Append>
-                      <Button variant="primary" onClick={handleSearch}>
-                        <FontAwesomeIcon icon={faSearch} />
-                      </Button>
-                    </InputGroup.Append>
-                  </InputGroup>
-                </Col>
-                <Col md={6} className="text-right">
-                  <Link to="/users/create">
-                    <Button variant="success">
-                      <FontAwesomeIcon icon={faPlus} className="mr-1" />
-                      {t('users.actions.create')}
-                    </Button>
-                  </Link>
-                </Col>
-              </Row>
-            </Card.Header>
-            <Card.Body className="p-0">
-              <div className="position-relative">
-                <Table responsive hover striped>
-                  <thead>
-                    <tr>
-                      <th>{t('users.fields.username')}</th>
-                      <th>{t('users.fields.email')}</th>
-                      <th>{t('users.fields.fullName')}</th>
-                      <th>{t('users.fields.status')}</th>
-                      <th>{t('users.fields.createdAt')}</th>
-                      <th>{t('users.fields.superAdmin')}</th>
-                      <th className="text-center">{t('users.fields.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.length > 0 ? (
-                      users.map((user) => (
-                        <tr key={user.id}>
-                          <td>{user.username}</td>
-                          <td>{user.email}</td>
-                          <td>{user.fullName || user.name}</td>
-                          <td>
-                            <span
-                              className={`badge ${
-                                user.status === UserStatus.ACTIVE
-                                  ? 'badge-success'
-                                  : 'badge-danger'
-                              }`}
-                            >
-                              {user.status || UserStatus.ACTIVE}
-                            </span>
-                          </td>
-                          <td>
-                            {user.createdAt
-                              ? new Date(user.createdAt).toLocaleDateString()
-                              : '-'}
-                          </td>
-                          <td>
-                            <Form.Check
-                              type="switch"
-                              id={`super-admin-switch-${user.id}`}
-                              checked={user.superAdmin}
-                              onChange={() => handleToggleSuperAdmin(user.id, user.superAdmin)}
-                              label={user.superAdmin ? t('common.yes') : t('common.no')}
-                            />
-                          </td>
-                          <td className="text-center">
-                            <div className="btn-group">
-                              <Link
-                                to={`/users/profile/${user.id}`}
-                                className="btn btn-info btn-sm"
-                                title={t('users.actions.view')}
-                              >
-                                <FontAwesomeIcon icon={faEye} />
-                              </Link>
-                              <Link
-                                to={`/users/edit/${user.id}`}
-                                className="btn btn-primary btn-sm"
-                                title={t('users.actions.edit')}
-                              >
-                                <FontAwesomeIcon icon={faEdit} />
-                              </Link>
-                              <Button
-                                variant={user.status === UserStatus.LOCKED ? 'success' : 'warning'}
-                                size="sm"
-                                title={
-                                  user.status === UserStatus.LOCKED
-                                    ? t('users.actions.unlock')
-                                    : t('users.actions.lock')
-                                }
-                                onClick={() => handleToggleLock(user.id, user.status || UserStatus.ACTIVE)}
-                              >
-                                <FontAwesomeIcon
-                                  icon={user.status === UserStatus.LOCKED ? faLockOpen : faLock}
-                                />
-                              </Button>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                title={t('users.actions.resetPassword')}
-                                onClick={() => {
-                                  setSelectedUserId(user.id);
-                                  setShowResetPasswordModal(true);
-                                }}
-                              >
-                                <FontAwesomeIcon icon={faKey} />
-                              </Button>
-                              <Button
-                                variant="danger"
-                                size="sm"
-                                title={t('users.actions.delete')}
-                                onClick={() => {
-                                  setSelectedUserId(user.id);
-                                  setShowDeleteModal(true);
-                                }}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} className="text-center">
-                          {t('users.noData')}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </Table>
-                {loading && <OverlayLoading />}
-              </div>
-            </Card.Body>
-            <Card.Footer>
-              <Row>
-                <Col sm={12} md={5}>
-                  <div className="dataTables_info">
-                    {t('pagination.showing')} {users.length > 0 ? currentPage * pageSize + 1 : 0}{' '}
-                    {t('pagination.to')}{' '}
-                    {Math.min((currentPage + 1) * pageSize, totalItems)} {t('pagination.of')}{' '}
-                    {totalItems} {t('pagination.entries')}
-                  </div>
-                </Col>
-                <Col sm={12} md={7}>
-                  <div className="dataTables_paginate paging_simple_numbers">
-                    <ul className="pagination m-0 float-right">
-                      <li className={`page-item ${currentPage === 0 ? 'disabled' : ''}`}>
-                        <Button
-                          variant="link"
-                          className="page-link"
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 0}
-                        >
-                          {t('pagination.previous')}
-                        </Button>
-                      </li>
-                      {[...Array(totalPages)].map((_, index) => (
-                        <li
-                          key={index}
-                          className={`page-item ${currentPage === index ? 'active' : ''}`}
-                        >
-                          <Button
-                            variant="link"
-                            className="page-link"
-                            onClick={() => handlePageChange(index)}
-                          >
-                            {index + 1}
-                          </Button>
-                        </li>
-                      ))}
-                      <li
-                        className={`page-item ${
-                          currentPage === totalPages - 1 ? 'disabled' : ''
-                        }`}
-                      >
-                        <Button
-                          variant="link"
-                          className="page-link"
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages - 1}
-                        >
-                          {t('pagination.next')}
-                        </Button>
-                      </li>
-                    </ul>
-                  </div>
-                </Col>
-              </Row>
-            </Card.Footer>
-          </Card>
+      <Card>
+        <div style={{ marginBottom: 16 }}>
+          <Row gutter={24} align="middle">
+            <Col xs={24} md={12}>
+              <SearchWrapper>
+                <Input 
+                  placeholder={t('users.search')}
+                  value={searchTerm}
+                  onChange={onSearchChange}
+                  onPressEnter={handleSearch}
+                  prefix={<SearchOutlined />}
+                  allowClear
+                />
+                <Button type="primary" onClick={handleSearch} style={{ marginLeft: 8 }}>
+                  {t('common.search')}
+                </Button>
+              </SearchWrapper>
+            </Col>
+            <Col xs={24} md={12}>
+              <ActionButtonsWrapper>
+                <Link to="/users/create">
+                  <Button type="primary" icon={<PlusOutlined />}>
+                    {t('users.actions.create')}
+                  </Button>
+                </Link>
+              </ActionButtonsWrapper>
+            </Col>
+          </Row>
         </div>
-      </section>
+        
+        <Table
+          dataSource={users}
+          columns={columns}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            current: currentPage + 1, // Convert to 1-based for display
+            pageSize: pageSize,
+            total: totalItems,
+            onChange: handlePageChange,
+            showSizeChanger: true,
+            showTotal: (total) => `${t('pagination.total')}: ${total} ${t('pagination.items')}`,
+          }}
+          bordered
+        />
+      </Card>
       
       {/* Delete Confirmation Modal */}
       <ConfirmModal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
+        open={showDeleteModal}
+        onCancel={() => setShowDeleteModal(false)}
         title={t('users.modals.deleteTitle')}
         message={t('users.modals.deleteMessage')}
         confirmText={t('common.delete')}
@@ -389,15 +348,15 @@ const Users = () => {
       
       {/* Reset Password Modal */}
       <ResetPasswordModal
-        show={showResetPasswordModal}
-        onHide={() => setShowResetPasswordModal(false)}
+        open={showResetPasswordModal}
+        onCancel={() => setShowResetPasswordModal(false)}
         onSubmit={handleResetPassword}
       />
 
       {/* Confirm Super Admin Toggle Modal */}
       <ConfirmModal
-        show={showConfirmModal}
-        onHide={() => setShowConfirmModal(false)}
+        open={showConfirmModal}
+        onCancel={() => setShowConfirmModal(false)}
         title={t('users.modals.superAdminTitle')}
         message={t('users.modals.superAdminMessage')}
         confirmText={t('common.confirm')}

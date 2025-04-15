@@ -1,11 +1,15 @@
-import { SidebarSearch } from '@app/components/sidebar-search/SidebarSearch';
+import { UserOutlined } from '@ant-design/icons';
 import { envConfig } from '@app/configs/loadEnv';
 import { useAppSelector } from '@app/store/store';
 import i18n from '@app/utils/i18n';
 import { MenuItem } from '@components';
 import { Image } from '@profabric/react-components';
+import { Avatar, Layout, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+
+const { Sider } = Layout;
+const { Text } = Typography;
 
 export interface IMenuItem {
   name: string;
@@ -42,23 +46,101 @@ export const MENU: IMenuItem[] = [
     ],
   },
   {
+    name: 'Posts',
+    icon: 'fas fa-newspaper nav-icon',
+    path: '/posts',
+  },
+  {
     name: 'Categories',
     icon: 'fas fa-folder nav-icon',
     path: '/categories',
   },
 ];
 
-const StyledBrandImage = styled(Image)`
-  float: left;
-  line-height: 0.8;
-  margin: -1px 8px 0 6px;
-  opacity: 0.8;
-  --pf-box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19),
-    0 6px 6px rgba(0, 0, 0, 0.23) !important;
+const MENU_WIDTH = 250;
+
+const StyledSider = styled(Sider)<{ $sidebarSkin: string }>`
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background-color: ${props => props.$sidebarSkin.includes('dark') ? '#343a40' : '#fff'};
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  z-index: 100;
 `;
 
-const StyledUserImage = styled(Image)`
-  --pf-box-shadow: 0 3px 6px #00000029, 0 3px 6px #0000003b !important;
+const LogoContainer = styled(Link)`
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+`;
+
+const StyledBrandImage = styled(Image)`
+  margin-right: 10px;
+  opacity: 0.8;
+  --pf-box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23) !important;
+  
+  &:hover {
+    opacity: 1;
+  }
+`;
+
+const BrandText = styled.span<{ $isDark: boolean }>`
+  color: ${props => props.$isDark ? '#fff' : 'rgba(0, 0, 0, 0.85)'};
+  white-space: nowrap;
+  font-weight: 300;
+  font-size: 1.25rem;
+`;
+
+const UserPanel = styled.div<{ $isDark: boolean }>`
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(${props => props.$isDark ? '255, 255, 255, 0.1' : '0, 0, 0, 0.1'});
+`;
+
+const UserInfo = styled.div`
+  margin-left: 10px;
+  overflow: hidden;
+`;
+
+const UserLink = styled(Link)<{ $isDark: boolean }>`
+  color: ${props => props.$isDark ? '#fff' : 'rgba(0, 0, 0, 0.85)'};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  
+  &:hover {
+    color: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.65)'};
+  }
+`;
+
+const MenuContainer = styled.div<{ $isDark: boolean; $menuChildIndent: boolean }>`
+  .ant-menu {
+    border-right: none;
+    background: transparent;
+    
+    .ant-menu-item {
+      margin: 0;
+      padding-left: ${props => props.$menuChildIndent ? '40px' : '24px'} !important;
+      color: ${props => props.$isDark ? '#fff' : 'rgba(0, 0, 0, 0.85)'};
+    }
+    
+    .ant-menu-submenu-title {
+      margin: 0;
+      padding-left: ${props => props.$menuChildIndent ? '40px' : '24px'} !important;
+      color: ${props => props.$isDark ? '#fff' : 'rgba(0, 0, 0, 0.85)'};
+    }
+    
+    .ant-menu-item-selected {
+      background-color: ${props => props.$isDark ? '#3f6791' : '#e6f7ff'};
+    }
+  }
 `;
 
 const MenuSidebar = () => {
@@ -66,59 +148,50 @@ const MenuSidebar = () => {
   const sidebarSkin = useAppSelector((state) => state.ui.sidebarSkin);
   const menuItemFlat = useAppSelector((state) => state.ui.menuItemFlat);
   const menuChildIndent = useAppSelector((state) => state.ui.menuChildIndent);
+  
+  const isDark = sidebarSkin.includes('dark');
 
   return (
-    <aside className={`main-sidebar elevation-4 ${sidebarSkin}`}>
-      <Link to="/" className="brand-link">
+    <StyledSider 
+      width={MENU_WIDTH} 
+      $sidebarSkin={sidebarSkin}
+      theme={isDark ? 'dark' : 'light'}
+    >
+      <LogoContainer to="/">
         <StyledBrandImage
-          src="img/logo.png"
-          alt="AdminLTE Logo"
+          src="/img/logo.png"
+          alt="Logo"
           width={33}
           height={33}
           rounded
         />
-        <span className="brand-text font-weight-light">{envConfig.siteName}</span>
-      </Link>
-      <div className="sidebar">
-        <div className="user-panel mt-3 pb-3 mb-3 d-flex">
-          <div className="image">
-            <StyledUserImage
-              src={currentUser?.photoURL}
-              fallbackSrc="/img/default-profile.png"
-              alt="User"
-              width={34}
-              height={34}
-              rounded
+        <BrandText $isDark={isDark}>{envConfig.siteName}</BrandText>
+      </LogoContainer>
+      
+      <UserPanel $isDark={isDark}>
+        <Avatar 
+          src={currentUser?.photoURL || '/img/default-profile.png'} 
+          size={34} 
+          icon={<UserOutlined />} 
+        />
+        <UserInfo>
+          <UserLink to="/profile" $isDark={isDark}>
+            {currentUser?.email}
+          </UserLink>
+        </UserInfo>
+      </UserPanel>
+      
+      <MenuContainer $isDark={isDark} $menuChildIndent={menuChildIndent}>
+        <div style={{ overflowY: 'auto', height: 'calc(100vh - 120px)' }}>
+          {MENU.map((menuItem: IMenuItem) => (
+            <MenuItem
+              key={menuItem.name + menuItem.path}
+              menuItem={menuItem}
             />
-          </div>
-          <div className="info">
-            <Link to={'/profile'} className="d-block">
-              {currentUser?.email}
-            </Link>
-          </div>
+          ))}
         </div>
-
-        <div className="form-inline">
-          <SidebarSearch />
-        </div>
-
-        <nav className="mt-2" style={{ overflowY: 'hidden' }}>
-          <ul
-            className={`nav nav-pills nav-sidebar flex-column${
-              menuItemFlat ? ' nav-flat' : ''
-            }${menuChildIndent ? ' nav-child-indent' : ''}`}
-            role="menu"
-          >
-            {MENU.map((menuItem: IMenuItem) => (
-              <MenuItem
-                key={menuItem.name + menuItem.path}
-                menuItem={menuItem}
-              />
-            ))}
-          </ul>
-        </nav>
-      </div>
-    </aside>
+      </MenuContainer>
+    </StyledSider>
   );
 };
 

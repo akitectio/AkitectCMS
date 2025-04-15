@@ -1,5 +1,22 @@
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Spin } from 'antd';
+import styled from 'styled-components';
+
+const OverlayContainer = styled.div<{ $isDark?: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: ${props => props.$isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)'};
+  z-index: 10;
+  border-radius: inherit;
+`;
+
+const spinIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
 export const OverlayLoading = ({
   type = 'light',
@@ -7,8 +24,8 @@ export const OverlayLoading = ({
   type?: 'dark' | 'light';
 }) => {
   return (
-    <div className={`overlay ${type}`}>
-      <FontAwesomeIcon icon={faSpinner} size="2x" spin />
-    </div>
+    <OverlayContainer $isDark={type === 'dark'}>
+      <Spin indicator={spinIcon} />
+    </OverlayContainer>
   );
 };

@@ -8,6 +8,9 @@
 // Import Sass math module to fix abs() function deprecation warning
 @use "sass:math" as math;
 
+// Import our compatibility layer first
+@import "bootstrap-compat";
+
 // Bootstrap
 // ---------------------------------------------------
 @import "../node_modules/bootstrap/scss/functions";

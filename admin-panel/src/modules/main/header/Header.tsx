@@ -1,28 +1,74 @@
-import { ReactNode, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import {
-  toggleControlSidebar,
-  toggleSidebarMenu,
-} from '@app/store/reducers/ui';
+import { AppstoreOutlined, MenuOutlined } from '@ant-design/icons';
+import LanguagesDropdown from '@app/modules/main/header/languages-dropdown/LanguagesDropdown';
 import MessagesDropdown from '@app/modules/main/header/messages-dropdown/MessagesDropdown';
 import NotificationsDropdown from '@app/modules/main/header/notifications-dropdown/NotificationsDropdown';
-import LanguagesDropdown from '@app/modules/main/header/languages-dropdown/LanguagesDropdown';
 import UserDropdown from '@app/modules/main/header/user-dropdown/UserDropdown';
-import { styled } from 'styled-components';
-import { Image } from '@profabric/react-components';
+import {
+    toggleControlSidebar,
+    toggleSidebarMenu,
+} from '@app/store/reducers/ui';
 import { useAppDispatch, useAppSelector } from '@app/store/store';
+import { Image } from '@profabric/react-components';
+import { Button, Col, Layout, Row, Space } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { styled } from 'styled-components';
+
+const { Header: AntHeader } = Layout;
+
+const StyledHeader = styled(AntHeader)<{ $variant: string; $headerBorder: boolean }>`
+  background: ${props => props.$variant === 'navbar-white' ? '#fff' : props.$variant === 'navbar-dark' ? '#343a40' : '#3c8dbc'};
+  color: ${props => props.$variant === 'navbar-white' ? 'rgba(0, 0, 0, 0.85)' : '#fff'};
+  padding: 0 16px;
+  line-height: 56px;
+  height: 56px;
+  border-bottom: ${props => props.$headerBorder ? 'none' : '1px solid #dee2e6'};
+  display: flex;
+  align-items: center;
+  position: fixed;
+  z-index: 1000;
+  right: 0;
+  left: 0;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.125), 0 1px 3px rgba(0, 0, 0, 0.2);
+`;
 
 const StyledBrandImage = styled(Image)`
-  float: left;
-  line-height: 0.8;
   opacity: 0.8;
-  --pf-box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19),
-    0 6px 6px rgba(0, 0, 0, 0.23) !important;
-  margin: -1px 4px 0 6px;
+  --pf-box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23) !important;
+  margin: 0 8px 0 0;
 
   &:hover {
-    color: inherit;
+    opacity: 1;
+  }
+`;
+
+const BrandText = styled.span<{ $isDark: boolean }>`
+  color: ${props => props.$isDark ? '#fff' : 'rgba(0, 0, 0, 0.85)'};
+  font-weight: 300;
+  font-size: 1.25rem;
+`;
+
+const StyledLink = styled(Link)<{ $isDark: boolean }>`
+  color: ${props => props.$isDark ? '#fff' : 'rgba(0, 0, 0, 0.85)'};
+  transition: all 0.3s;
+  padding: 0 15px;
+  
+  &:hover {
+    color: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.75)' : 'rgba(0, 0, 0, 0.65)'};
+  }
+`;
+
+const StyledButton = styled(Button)<{ $isDark: boolean }>`
+  color: ${props => props.$isDark ? '#fff' : 'rgba(0, 0, 0, 0.85)'};
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 15px;
+  height: 56px;
+  
+  &:hover {
+    color: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.75)' : 'rgba(0, 0, 0, 0.65)'};
+    background: transparent;
   }
 `;
 
@@ -32,6 +78,9 @@ const Header = ({ containered, ...rest }: { containered?: boolean } & any) => {
   const navbarVariant = useAppSelector((state) => state.ui.navbarVariant);
   const headerBorder = useAppSelector((state) => state.ui.headerBorder);
   const topNavigation = useAppSelector((state) => state.ui.topNavigation);
+  
+  // Check if the navbar is dark
+  const isDark = navbarVariant !== 'navbar-white';
 
   const handleToggleMenuSidebar = () => {
     dispatch(toggleSidebarMenu());
@@ -41,91 +90,68 @@ const Header = ({ containered, ...rest }: { containered?: boolean } & any) => {
     dispatch(toggleControlSidebar());
   };
 
-  const getContainerClasses = useCallback(() => {
-    let classes = `main-header navbar navbar-expand ${navbarVariant}`;
-    if (headerBorder) {
-      classes = `${classes} border-bottom-0`;
-    }
-    return classes;
-  }, [navbarVariant, headerBorder]);
-
   return (
-    <nav className={getContainerClasses()} {...rest}>
-      <div
-        style={{ width: '100%', display: 'flex', alignItems: 'center' }}
+    <StyledHeader 
+      $variant={navbarVariant} 
+      $headerBorder={headerBorder}
+      {...rest}
+    >
+      <Row 
+        justify="space-between" 
+        align="middle" 
+        style={{ width: '100%' }}
         className={containered ? 'container' : ''}
       >
-        {topNavigation && (
-          <>
-            <Link to="/" className="brand-link" style={{ display: 'contents' }}>
-              <StyledBrandImage
-                src="/img/logo.png"
-                alt="AdminLTE Logo"
-                width={33}
-                height={33}
-                rounded
-              />
-              <span
-                className="brand-text font-weight-light"
-                style={{ color: 'rgba(0, 0, 0, 0.9)' }}
-              >
-                AdminLTE 3
-              </span>
-            </Link>
-
-            <button
-              className="navbar-toggler order-1"
-              type="button"
-              data-toggle="collapse"
-              data-target="#navbarCollapse"
-              aria-controls="navbarCollapse"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
-            >
-              <span className="navbar-toggler-icon"></span>
-            </button>
-          </>
-        )}
-        <ul className="navbar-nav">
-          {!topNavigation && (
-            <li className="nav-item">
-              <button
+        <Col>
+          <Space>
+            {!topNavigation && (
+              <StyledButton 
+                type="text" 
+                icon={<MenuOutlined />} 
                 onClick={handleToggleMenuSidebar}
-                type="button"
-                className="nav-link"
-              >
-                <i className="fas fa-bars" />
-              </button>
-            </li>
-          )}
-          <li className="nav-item d-none d-sm-inline-block">
-            <Link to="/" className="nav-link">
+                $isDark={isDark}
+              />
+            )}
+            
+            {topNavigation && (
+              <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
+                <StyledBrandImage
+                  src="/img/logo.png"
+                  alt="AdminLTE Logo"
+                  width={33}
+                  height={33}
+                  rounded
+                />
+                <BrandText $isDark={isDark}>AdminLTE 3</BrandText>
+              </Link>
+            )}
+            
+            <StyledLink to="/" $isDark={isDark}>
               {t('header.label.home')}
-            </Link>
-          </li>
-          <li className="nav-item d-none d-sm-inline-block">
-            <Link to="/profile" className="nav-link">
+            </StyledLink>
+            
+            <StyledLink to="/profile" $isDark={isDark}>
               Profile
-            </Link>
-          </li>
-        </ul>
-        <ul className="navbar-nav ml-auto">
-          <MessagesDropdown />
-          <NotificationsDropdown />
-          <LanguagesDropdown />
-          <UserDropdown />
-          <li className="nav-item">
-            <button
-              type="button"
-              className="nav-link"
+            </StyledLink>
+          </Space>
+        </Col>
+        
+        <Col>
+          <Space size="middle">
+            <MessagesDropdown />
+            <NotificationsDropdown />
+            <LanguagesDropdown />
+            <UserDropdown />
+            <StyledButton 
+              type="text" 
+              icon={<AppstoreOutlined />} 
               onClick={handleToggleControlSidebar}
-            >
-              <i className="fas fa-th-large" />
-            </button>
-          </li>
-        </ul>
-      </div>
-    </nav>
+              $isDark={isDark}
+            />
+          </Space>
+        </Col>
+      </Row>
+    </StyledHeader>
   );
 };
 

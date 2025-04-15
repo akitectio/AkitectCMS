@@ -1,116 +1,168 @@
-import { Link } from 'react-router-dom';
+import { ClockCircleOutlined, MessageOutlined, StarOutlined } from '@ant-design/icons';
+import { Avatar, Badge, Divider, Dropdown, List, Typography } from 'antd';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image } from '@profabric/react-components';
-import { MessagesMenu } from '@app/styles/dropdown-menus';
+import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+
+const { Text, Title } = Typography;
+
+const StyledDropdownButton = styled.div`
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+`;
+
+const DropdownContainer = styled.div`
+  width: 320px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+  padding: 0;
+`;
+
+const MessageItem = styled.div`
+  display: flex;
+  padding: 10px;
+  
+  &:hover {
+    background-color: #f8f9fa;
+  }
+`;
+
+const MessageContent = styled.div`
+  margin-left: 10px;
+  flex: 1;
+`;
+
+const MessageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+`;
+
+const MessageTitle = styled(Text)`
+  font-weight: bold;
+  font-size: 14px;
+`;
+
+const MessageText = styled(Text)`
+  font-size: 13px;
+  display: block;
+`;
+
+const MessageTime = styled(Text)`
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+`;
+
+const MessageFooter = styled(Link)`
+  display: block;
+  text-align: center;
+  padding: 10px;
+  font-weight: bold;
+  
+  &:hover {
+    background-color: #f8f9fa;
+  }
+`;
+
+// Messages data
+const messages = [
+  {
+    id: 1,
+    name: 'Brad Diesel',
+    avatar: '/img/default-profile.png',
+    content: 'Call me whenever you can...',
+    time: '30',
+    unit: 'Minutes',
+    importance: 'danger'
+  },
+  {
+    id: 2,
+    name: 'John Pierce',
+    avatar: '/img/default-profile.png',
+    content: 'I got your message bro',
+    time: '3',
+    unit: 'Hours',
+    importance: 'default'
+  },
+  {
+    id: 3,
+    name: 'Nora Silvester',
+    avatar: '/img/default-profile.png',
+    content: 'The subject goes here',
+    time: '4',
+    unit: 'Hours',
+    importance: 'warning'
+  }
+];
 
 const MessagesDropdown = () => {
   const [t] = useTranslation();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Get the star color based on importance
+  const getStarColor = (importance: string) => {
+    switch (importance) {
+      case 'danger':
+        return '#ff4d4f';
+      case 'warning':
+        return '#faad14';
+      default:
+        return '#bfbfbf';
+    }
+  };
+
+  const dropdownContent = (
+    <DropdownContainer>
+      <List
+        dataSource={messages}
+        renderItem={(item) => (
+          <>
+            <Link to="/">
+              <MessageItem>
+                <Avatar src={item.avatar} size={50} />
+                <MessageContent>
+                  <MessageHeader>
+                    <MessageTitle>{item.name}</MessageTitle>
+                    <StarOutlined style={{ color: getStarColor(item.importance) }} />
+                  </MessageHeader>
+                  <MessageText>{item.content}</MessageText>
+                  <MessageTime>
+                    <ClockCircleOutlined style={{ marginRight: 5 }} />
+                    {t('header.messages.ago', {
+                      quantity: item.time,
+                      unit: item.unit,
+                    })}
+                  </MessageTime>
+                </MessageContent>
+              </MessageItem>
+            </Link>
+            <Divider style={{ margin: 0 }} />
+          </>
+        )}
+      />
+      <MessageFooter to="/">
+        {t('header.messages.seeAll')}
+      </MessageFooter>
+    </DropdownContainer>
+  );
 
   return (
-    <MessagesMenu hideArrow>
-      <div slot="head">
-        <i className="far fa-comments" />
-        <span className="badge badge-danger navbar-badge">3</span>
-      </div>
-      <div slot="body">
-        <Link to="/" className="dropdown-item">
-          <div className="media">
-            <Image
-              src={'/img/default-profile.png'}
-              alt="User Avatar"
-              width={50}
-              height={50}
-              rounded
-              className="mr-2"
-            />
-            <div className="media-body">
-              <h3 className="dropdown-item-title">
-                Brad Diesel
-                <span className="float-right text-sm text-danger">
-                  <i className="fas fa-star" />
-                </span>
-              </h3>
-              <p className="text-sm">Call me whenever you can...</p>
-              <p className="text-sm text-muted">
-                <i className="far fa-clock mr-1" />
-                <span>
-                  {t('header.messages.ago', {
-                    quantity: '30',
-                    unit: 'Minutes',
-                  })}
-                </span>
-              </p>
-            </div>
-          </div>
-        </Link>
-        <div className="dropdown-divider" />
-        <Link to="/" className="dropdown-item">
-          <div className="media">
-            <Image
-              src="/img/default-profile.png"
-              alt="User Avatar"
-              width={50}
-              height={50}
-              rounded
-              className="mr-2"
-            />
-            <div className="media-body">
-              <h3 className="dropdown-item-title">
-                John Pierce
-                <span className="float-right text-sm text-muted">
-                  <i className="fas fa-star" />
-                </span>
-              </h3>
-              <p className="text-sm">I got your message bro</p>
-              <p className="text-sm text-muted">
-                <i className="far fa-clock mr-1" />
-                <span>
-                  {t('header.messages.ago', {
-                    quantity: '3',
-                    unit: 'Hours',
-                  })}
-                </span>
-              </p>
-            </div>
-          </div>
-        </Link>
-        <div className="dropdown-divider" />
-        <Link to="/" className="dropdown-item">
-          <div className="media">
-            <Image
-              src="/img/default-profile.png"
-              alt="User Avatar"
-              width={50}
-              height={50}
-              rounded
-              className="mr-2"
-            />
-            <div className="media-body">
-              <h3 className="dropdown-item-title">
-                Nora Silvester
-                <span className="float-right text-sm text-warning">
-                  <i className="fas fa-star" />
-                </span>
-              </h3>
-              <p className="text-sm">The subject goes here</p>
-              <p className="text-sm text-muted">
-                <i className="far fa-clock mr-1" />
-                <span>
-                  {t('header.messages.ago', {
-                    quantity: '4',
-                    unit: 'Hours',
-                  })}
-                </span>
-              </p>
-            </div>
-          </div>
-        </Link>
-        <div className="dropdown-divider" />
-        <Link to="/" className="dropdown-item dropdown-footer">
-          {t('header.messages.seeAll')}
-        </Link>
-      </div>
-    </MessagesMenu>
+    <Dropdown 
+      overlay={dropdownContent}
+      open={dropdownOpen}
+      onOpenChange={setDropdownOpen}
+      trigger={['click']}
+      placement="bottomRight"
+    >
+      <StyledDropdownButton>
+        <Badge count={3} size="small">
+          <MessageOutlined style={{ fontSize: '18px' }} />
+        </Badge>
+      </StyledDropdownButton>
+    </Dropdown>
   );
 };
 

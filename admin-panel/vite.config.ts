@@ -24,7 +24,13 @@ export default ({ mode }) => {
         '@hooks': path.resolve(__dirname, './src/hooks'),
         '@styles': path.resolve(__dirname, './src/styles'),
         '@configs': path.resolve(__dirname, './src/configs'),
-        '@aki_types': path.resolve(__dirname, './src/types')
+        '@routes': path.resolve(__dirname, './src/routes'),
+        '@assets': path.resolve(__dirname, './src/assets'),
+        '@types': path.resolve(__dirname, './src/types'),
+        '@constants': path.resolve(__dirname, './src/constants'),
+        '@context': path.resolve(__dirname, './src/context'),
+        '@layouts': path.resolve(__dirname, './src/layouts'),
+        '@locales': path.resolve(__dirname, './src/locales')
       },
     },
   });

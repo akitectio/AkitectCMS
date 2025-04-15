@@ -1,7 +1,6 @@
 // Removed unused import of User from firebase/auth
 // import { User } from 'firebase/auth';
 
-import { User } from '@app/types/user';
 
 export enum UserStatus {
   ACTIVE = 'ACTIVE',

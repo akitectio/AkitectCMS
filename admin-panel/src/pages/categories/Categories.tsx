@@ -1,16 +1,27 @@
+import { EditOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import { ConfirmModal } from '@app/components/ConfirmModal';
-import { OverlayLoading } from '@app/components/OverlayLoading';
 import categoryService from '@app/services/categories';
 import { ContentHeader } from '@components';
-import { faEdit, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Switch } from 'antd';
+import {
+    Alert,
+    Button,
+    Card,
+    Col,
+    Form,
+    Input,
+    Row,
+    Select,
+    Spin,
+    Switch
+} from 'antd';
 import { useEffect, useState } from 'react';
-import { Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { Category } from '../../types/category';
 import CategoryTree from './CategoryTree';
+
+const { TextArea } = Input;
+const { Option } = Select;
 
 const Categories = () => {
   const { t } = useTranslation();
@@ -221,227 +232,237 @@ const Categories = () => {
     <div>
       <ContentHeader title={t('categories.management')} />
       
-      <section className="content">
-        <div className="container-fluid">
-          <div className="row">
-            {/* Tree View - Left 50% */}
-            <div className="col-md-6">
-              <Card>
-                <Card.Header>
-                  <h3 className="card-title">
-                    <FontAwesomeIcon icon={faEdit} className="mr-2" />
-                    {t('categories.treeView')}
-                  </h3>
-                  <div className="card-tools">
-                    <Button 
-                      variant="primary" 
-                      size="sm"
-                      onClick={handleNewCategory}
+      <Row gutter={16} style={{ margin: '24px 8px' }}>
+        {/* Tree View - Left 50% */}
+        <Col span={12}>
+          <Card 
+            title={
+              <span>
+                <EditOutlined style={{ marginRight: 8 }} />
+                {t('categories.treeView')}
+              </span>
+            }
+            extra={
+              <Button 
+                type="primary" 
+                size="small"
+                onClick={handleNewCategory}
+                icon={<PlusOutlined />}
+              >
+                {t('categories.addNew')}
+              </Button>
+            }
+            style={{ minHeight: '500px' }}
+          >
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                <Spin size="large" />
+              </div>
+            ) : (
+              <CategoryTree 
+                categories={categories} 
+                onSelectCategory={handleCategorySelect}
+                onDeleteCategory={handleDeleteClick}
+                selectedCategoryId={selectedCategory?.id}
+              />
+            )}
+          </Card>
+        </Col>
+        
+        {/* Form - Right 50% */}
+        <Col span={12}>
+          <Card 
+            title={
+              <span>
+                <EditOutlined style={{ marginRight: 8 }} />
+                {selectedCategory 
+                  ? t('categories.editCategory') 
+                  : t('categories.addCategory')}
+              </span>
+            }
+            style={{ minHeight: '500px' }}
+          >
+            <div style={{ position: 'relative', minHeight: '400px' }}>
+              {saving && (
+                <div style={{ 
+                  position: 'absolute', 
+                  top: 0, 
+                  left: 0, 
+                  width: '100%', 
+                  height: '100%', 
+                  background: 'rgba(255, 255, 255, 0.7)', 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center', 
+                  zIndex: 1 
+                }}>
+                  <Spin size="large" />
+                </div>
+              )}
+              
+              <Form layout="vertical" onFinish={handleSubmit}>
+                <Form.Item
+                  label={t('categories.form.name')}
+                  name="name"
+                  initialValue={formData.name}
+                  rules={[{ required: true, message: t('validation.required') }]}
+                >
+                  <Input
+                    placeholder={t('categories.form.namePlaceholder')}
+                    value={formData.name}
+                    onChange={handleNameChange}
+                  />
+                </Form.Item>
+                
+                <Form.Item
+                  label={t('categories.form.slug')}
+                  name="slug"
+                  initialValue={formData.slug}
+                  rules={[{ required: true, message: t('validation.required') }]}
+                >
+                  <Input
+                    placeholder={t('categories.form.slugPlaceholder')}
+                    value={formData.slug}
+                    onChange={(e) => handleChange(e)}
+                  />
+                </Form.Item>
+                
+                <Form.Item
+                  label={t('categories.form.description')}
+                  name="description"
+                  initialValue={formData.description}
+                >
+                  <TextArea
+                    rows={3}
+                    placeholder={t('categories.form.descriptionPlaceholder')}
+                    value={formData.description}
+                    onChange={(e) => handleChange(e)}
+                  />
+                </Form.Item>
+                
+                <Form.Item
+                  label={t('categories.form.parentCategory')}
+                  name="parentId"
+                  initialValue={formData.parentId}
+                >
+                  <Select
+                    placeholder={t('categories.form.noParent')}
+                    allowClear
+                    value={formData.parentId}
+                    onChange={(value) => setFormData({...formData, parentId: value})}
+                  >
+                    <Option value="">{t('categories.form.noParent')}</Option>
+                    {(categories || [])
+                      .filter(cat => !selectedCategory || cat.id !== selectedCategory.id)
+                      .map(category => (
+                        <Option key={category.id} value={category.id}>
+                          {category.name}
+                        </Option>
+                      ))}
+                  </Select>
+                </Form.Item>
+                
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      label={t('categories.form.displayOrder')}
+                      name="displayOrder"
+                      initialValue={formData.displayOrder}
                     >
-                      <FontAwesomeIcon icon={faPlus} className="mr-1" />
-                      {t('categories.addNew')}
+                      <Input
+                        type="number"
+                        min={0}
+                        value={formData.displayOrder}
+                        onChange={(e) => handleChange(e)}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      label={t('categories.form.featured')}
+                      name="featured"
+                      valuePropName="checked"
+                      initialValue={formData.featured}
+                    >
+                      <Switch
+                        checked={formData.featured}
+                        onChange={handleFeaturedChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                
+                <div style={{ marginTop: 24 }}>
+                  <h5>{t('categories.form.seoSection')}</h5>
+                  <hr />
+                </div>
+                
+                <Form.Item
+                  label={t('categories.form.metaTitle')}
+                  name="metaTitle"
+                  initialValue={formData.metaTitle}
+                >
+                  <Input
+                    placeholder={t('categories.form.metaTitlePlaceholder')}
+                    value={formData.metaTitle}
+                    onChange={(e) => handleChange(e)}
+                  />
+                </Form.Item>
+                
+                <Form.Item
+                  label={t('categories.form.metaDescription')}
+                  name="metaDescription"
+                  initialValue={formData.metaDescription}
+                >
+                  <TextArea
+                    rows={2}
+                    placeholder={t('categories.form.metaDescriptionPlaceholder')}
+                    value={formData.metaDescription}
+                    onChange={(e) => handleChange(e)}
+                  />
+                </Form.Item>
+                
+                <Form.Item>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      type="default"
+                      onClick={handleNewCategory}
+                      style={{ marginRight: 8 }}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={saving}
+                      icon={!saving && <SaveOutlined />}
+                    >
+                      {saving ? t('common.saving') : t('common.save')}
                     </Button>
                   </div>
-                </Card.Header>
-                <Card.Body style={{ minHeight: '500px' }}>
-                  {loading ? (
-                    <OverlayLoading />
-                  ) : (
-                    <CategoryTree 
-                      categories={categories} 
-                      onSelectCategory={handleCategorySelect}
-                      onDeleteCategory={handleDeleteClick}
-                      selectedCategoryId={selectedCategory?.id}
-                    />
-                  )}
-                </Card.Body>
-              </Card>
+                </Form.Item>
+              </Form>
             </div>
-            
-            {/* Form - Right 50% */}
-            <div className="col-md-6">
-              <Card>
-                <Card.Header>
-                  <h3 className="card-title">
-                    <FontAwesomeIcon icon={faEdit} className="mr-2" />
-                    {selectedCategory 
-                      ? t('categories.editCategory') 
-                      : t('categories.addCategory')}
-                  </h3>
-                </Card.Header>
-                <Form 
-                  noValidate 
-                  validated={validated} 
-                  onSubmit={handleSubmit}
-                >
-                  <Card.Body style={{ minHeight: '500px' }}>
-                    {saving && <OverlayLoading />}
-                    
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('categories.form.name')}</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleNameChange}
-                        placeholder={t('categories.form.namePlaceholder')}
-                        required
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {t('validation.required')}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                    
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('categories.form.slug')}</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="slug"
-                        value={formData.slug}
-                        onChange={handleChange}
-                        placeholder={t('categories.form.slugPlaceholder')}
-                        required
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {t('validation.required')}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                    
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('categories.form.description')}</Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={3}
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        placeholder={t('categories.form.descriptionPlaceholder')}
-                      />
-                    </Form.Group>
-                    
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('categories.form.parentCategory')}</Form.Label>
-                      <Form.Control
-                        as="select"
-                        name="parentId"
-                        value={formData.parentId}
-                        onChange={handleChange}
-                      >
-                        <option value="">{t('categories.form.noParent')}</option>
-                        {(categories || [])
-                          .filter(cat => !selectedCategory || cat.id !== selectedCategory.id)
-                          .map(category => (
-                            <option key={category.id} value={category.id}>
-                              {category.name}
-                            </option>
-                          ))}
-                      </Form.Control>
-                    </Form.Group>
-                    
-                    <Row>
-                      <Col md={6}>
-                        <Form.Group className="mb-3">
-                          <Form.Label>{t('categories.form.displayOrder')}</Form.Label>
-                          <Form.Control
-                            type="number"
-                            name="displayOrder"
-                            value={formData.displayOrder}
-                            onChange={handleChange}
-                            min={0}
-                          />
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group className="mb-3 mt-4">
-                          <div className="d-flex align-items-center">
-                            <label className="mr-2">{t('categories.form.featured')}</label>
-                            <Switch
-                              checked={formData.featured}
-                              onChange={handleFeaturedChange}
-                              size="small"
-                              className="ml-2"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                    </Row>
-                    
-                    <h5 className="mt-4">{t('categories.form.seoSection')}</h5>
-                    <hr />
-                    
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('categories.form.metaTitle')}</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="metaTitle"
-                        value={formData.metaTitle}
-                        onChange={handleChange}
-                        placeholder={t('categories.form.metaTitlePlaceholder')}
-                      />
-                    </Form.Group>
-                    
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('categories.form.metaDescription')}</Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={2}
-                        name="metaDescription"
-                        value={formData.metaDescription}
-                        onChange={handleChange}
-                        placeholder={t('categories.form.metaDescriptionPlaceholder')}
-                      />
-                    </Form.Group>
-                  </Card.Body>
-                  
-                  <Card.Footer>
-                    <div className="d-flex justify-content-end">
-                      <Button
-                        variant="secondary"
-                        className="mr-2"
-                        onClick={handleNewCategory}
-                      >
-                        {t('common.cancel')}
-                      </Button>
-                      <Button
-                        variant="primary"
-                        type="submit"
-                        disabled={saving}
-                      >
-                        {saving ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                            {t('common.saving')}
-                          </>
-                        ) : (
-                          <>
-                            <FontAwesomeIcon icon={faSave} className="mr-1" />
-                            {t('common.save')}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </Card.Footer>
-                </Form>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
+          </Card>
+        </Col>
+      </Row>
       
       {/* Delete Confirmation Modal */}
       <ConfirmModal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
+        open={showDeleteModal}
+        onCancel={() => setShowDeleteModal(false)}
         title={t('categories.deleteTitle')}
         message={
           <>
             {t('categories.delete.confirmation')}
             <strong> {categoryToDelete?.name}</strong>?
             {categoryToDelete?.children && categoryToDelete.children.length > 0 && (
-              <div className="alert alert-warning mt-3">
-                <FontAwesomeIcon icon={faTrash} className="mr-2" />
-                {t('categories.delete.warningChildren')}
-              </div>
+              <Alert
+                type="warning"
+                message={t('categories.delete.warningChildren')}
+                showIcon
+                style={{ marginTop: 16 }}
+              />
             )}
           </>
         }
@@ -449,7 +470,6 @@ const Categories = () => {
         cancelText={t('common.cancel')}
         onConfirm={handleDeleteConfirm}
         confirmVariant="danger"
-        isProcessing={deleting}
       />
     </div>
   );
