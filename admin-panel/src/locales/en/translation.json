@@ -257,6 +257,11 @@
     "checkingEmail": "Checking email availability..."
   },
   "categories": {
+    "management": "Categories Management",
+    "treeView": "Tree View",
+    "addCategory": "Add Category",
+    "addNew": "Add New Category",
+    "editCategory": "Edit Category",
     "title": "Category Management",
     "listTitle": "Categories List",
     "addButton": "Add Category",
@@ -290,7 +295,8 @@
       "metaTitlePlaceholder": "Enter meta title (for SEO)",
       "metaDescription": "Meta Description",
       "metaDescriptionPlaceholder": "Enter meta description (for SEO)",
-      "noParent": "No Parent (Top Level)"
+      "noParent": "No Parent (Top Level)",
+      "displayOrder": "Display Order"
     },
     "messages": {
       "createSuccess": "Category created successfully",

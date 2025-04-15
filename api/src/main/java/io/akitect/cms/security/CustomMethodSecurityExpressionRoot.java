@@ -22,7 +22,7 @@ public class CustomMethodSecurityExpressionRoot extends SecurityExpressionRoot
      * @param permission The permission to check
      * @return true if user has permission or is a super admin
      */
-    public boolean hasAuthority(String permission) {
+    public boolean hasPermission(String permission) {
         // Get the current authenticated user
         Authentication authentication = getAuthentication();
 

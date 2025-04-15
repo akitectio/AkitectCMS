@@ -4,6 +4,7 @@ import categoryService from '@app/services/categories';
 import { ContentHeader } from '@components';
 import { faEdit, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Switch } from 'antd';
 import { useEffect, useState } from 'react';
 import { Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
@@ -73,6 +74,14 @@ const Categories = () => {
         : name === 'displayOrder' 
           ? parseInt(value, 10) || 0 
           : value
+    });
+  };
+
+  // Handle Featured toggle with Ant Design Switch
+  const handleFeaturedChange = (checked: boolean) => {
+    setFormData({
+      ...formData,
+      featured: checked
     });
   };
 
@@ -344,13 +353,15 @@ const Categories = () => {
                       </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3 mt-4">
-                          <Form.Check
-                            type="checkbox"
-                            label={t('categories.form.featured')}
-                            name="featured"
-                            checked={formData.featured}
-                            onChange={handleChange}
-                          />
+                          <div className="d-flex align-items-center">
+                            <label className="mr-2">{t('categories.form.featured')}</label>
+                            <Switch
+                              checked={formData.featured}
+                              onChange={handleFeaturedChange}
+                              size="small"
+                              className="ml-2"
+                            />
+                          </div>
                         </Form.Group>
                       </Col>
                     </Row>
@@ -421,7 +432,7 @@ const Categories = () => {
       <ConfirmModal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
-        title={t('categories.delete.title')}
+        title={t('categories.deleteTitle')}
         message={
           <>
             {t('categories.delete.confirmation')}

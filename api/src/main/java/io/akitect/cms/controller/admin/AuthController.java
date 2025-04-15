@@ -36,17 +36,17 @@ public class AuthController extends AdminBaseController {
         return ResponseEntity.ok(jwtResponse);
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logoutUser(HttpServletRequest request) {
-        String jwt = parseJwt(request);
-        boolean result = authService.logout(jwt, request);
-
-        if (result) {
-            return ResponseEntity.ok(new MessageResponse("Logged out successfully"));
-        } else {
-            return ResponseEntity.ok(new MessageResponse("No active session found"));
-        }
-    }
+//    @PostMapping("/logout")
+//    public ResponseEntity<?> logoutUser(HttpServletRequest request) {
+//        String jwt = parseJwt(request);
+//        boolean result = authService.logout(jwt, request);
+//
+//        if (result) {
+//            return ResponseEntity.ok(new MessageResponse("Logged out successfully"));
+//        } else {
+//            return ResponseEntity.ok(new MessageResponse("No active session found"));
+//        }
+//    }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterDTO registerDTO, HttpServletRequest request) {

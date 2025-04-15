@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
 import { DateTime } from 'luxon';
+import { useTranslation } from 'react-i18next';
 import packageJSON from '../../../../package.json';
 
 const Footer = ({
@@ -25,11 +25,11 @@ const Footer = ({
         <strong>
           <span>Copyright © {DateTime.now().toFormat('y')} </span>
           <a
-            href="https://erdkse.com"
+            href="https://akitect.io"
             target="_blank"
             rel="noopener noreferrer"
           >
-            erdkse.com
+            akitect.io
           </a>
           <span>.</span>
         </strong>

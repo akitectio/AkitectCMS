@@ -2,66 +2,108 @@
   margin-top: 10px;
   max-height: 500px;
   overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  padding-left: 5px;
 }
 
 .category-tree-node {
-  margin-bottom: 5px;
+  position: relative;
 }
 
 .category-tree-item {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
-  border-radius: 4px;
+  padding: 5px 0;
   cursor: pointer;
   transition: background-color 0.2s;
-  margin-bottom: 2px;
   position: relative;
+  white-space: nowrap;
+  border-radius: 2px;
 }
 
 .category-tree-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .category-tree-item.selected {
   background-color: rgba(0, 123, 255, 0.1);
-  border-left: 3px solid #007bff;
 }
 
+/* Tree connecting lines */
+.category-children {
+  position: relative;
+  padding-left: 18px;
+}
+
+.category-children::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8px;
+  width: 1px;
+  height: 100%;
+  border-left: 1px dotted #ccc;
+}
+
+.category-tree-item::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  border-top: 1px dotted #ccc;
+  display: none; /* Only show for nested items */
+}
+
+.category-children .category-tree-item::before {
+  display: block; /* Show horizontal lines for nested items */
+}
+
+/* Icons and text */
 .toggle-icon {
-  margin-right: 5px;
-  width: 15px;
-  cursor: pointer;
-  display: inline-block;
+  width: 16px;
+  text-align: center;
+  margin-right: 4px;
 }
 
 .category-icon {
-  margin-right: 8px;
+  width: 20px;
+  text-align: center;
+  margin-right: 6px;
 }
 
 .category-name {
   flex-grow: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: 500;
-  white-space: nowrap;
+  font-weight: normal;
 }
 
+/* Actions */
 .category-actions {
   opacity: 0;
   transition: opacity 0.2s;
-  margin-left: auto;
+  margin-left: 8px;
 }
 
 .category-tree-item:hover .category-actions {
   opacity: 1;
 }
 
-.category-children {
-  margin-left: 10px;
+.btn-icon {
+  padding: 2px 5px;
+  font-size: 0.75rem;
+  margin-left: 2px;
 }
 
-.btn-icon {
-  padding: 2px 6px;
-  font-size: 0.7rem;
+/* Top level items styling */
+.category-tree > .category-tree-node > .category-tree-item {
+  font-weight: 500;
+}
+
+/* Selected item highlighting */
+.category-tree-item.selected .category-name {
+  color: #007bff;
+  font-weight: 500;
 }

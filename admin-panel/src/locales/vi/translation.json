@@ -256,6 +256,76 @@
     "checkingUsername": "Đang kiểm tra tính khả dụng của tên đăng nhập...",
     "checkingEmail": "Đang kiểm tra tính khả dụng của email..."
   },
+  "categories": {
+    "management": "Quản lý danh mục",
+    "treeView": "Cấu trúc danh mục",
+    "addCategory": "Thêm danh mục",
+    "editCategory": "Chỉnh sửa danh mục",
+    "title": "Quản lý danh mục",
+    "listTitle": "Danh sách danh mục",
+    "addNew": "Thêm danh mục",
+    "createTitle": "Tạo danh mục",
+    "editTitle": "Chỉnh sửa danh mục: {{name}}",
+    "fields": {
+      "name": "Tên",
+      "slug": "Slug",
+      "description": "Mô tả",
+      "parentCategory": "Danh mục cha",
+      "featured": "Nổi bật",
+      "displayOrder": "Thứ tự hiển thị",
+      "postCount": "Số bài viết",
+      "createdAt": "Ngày tạo"
+    },
+    "actions": {
+      "edit": "Chỉnh sửa",
+      "delete": "Xóa"
+    },
+    "form": {
+      "name": "Tên danh mục",
+      "namePlaceholder": "Nhập tên danh mục",
+      "slug": "Slug",
+      "slugPlaceholder": "Nhập slug (hoặc để trống để tự động tạo từ tên)",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Nhập mô tả danh mục",
+      "parentCategory": "Danh mục cha (Tùy chọn)",
+      "selectParentCategory": "Chọn danh mục cha",
+      "featured": "Danh mục nổi bật",
+      "displayOrder": "Thứ tự hiển thị",
+      "seoSection": "Cài đặt SEO",
+      "metaTitle": "Tiêu đề Meta",
+      "metaTitlePlaceholder": "Nhập tiêu đề meta (cho SEO)",
+      "metaDescription": "Mô tả Meta",
+      "metaDescriptionPlaceholder": "Nhập mô tả meta (cho SEO)",
+      "noParent": "Không có danh mục cha (Cấp cao nhất)"
+    },
+    "messages": {
+      "createSuccess": "Tạo danh mục thành công",
+      "updateSuccess": "Cập nhật danh mục thành công",
+      "deleteSuccess": "Xóa danh mục thành công"
+    },
+    "errors": {
+      "fetchFailed": "Không thể tải danh sách danh mục",
+      "createFailed": "Không thể tạo danh mục",
+      "updateFailed": "Không thể cập nhật danh mục",
+      "deleteFailed": "Không thể xóa danh mục",
+      "slugExists": "Đã tồn tại danh mục với slug này",
+      "categoryNotFound": "Không tìm thấy danh mục"
+    },
+    "delete": {
+      "title": "Xóa danh mục",
+      "confirmation": "Bạn có chắc chắn muốn xóa danh mục",
+      "warningChildren": "Danh mục này có chứa các danh mục con. Nếu bạn xóa nó, tất cả danh mục con sẽ được chuyển lên cấp trên."
+    },
+    "modals": {
+      "deleteTitle": "Xóa danh mục",
+      "deleteMessage": "Bạn có chắc chắn muốn xóa danh mục \"{{name}}\"?"
+    },
+    "noCategories": "Không tìm thấy danh mục nào",
+    "validation": {
+      "nameRequired": "Tên danh mục là bắt buộc",
+      "slugFormat": "Slug chỉ có thể chứa chữ cái thường, số và dấu gạch ngang"
+    }
+  },
   "common": {
     "save": "Lưu",
     "cancel": "Hủy Bỏ",

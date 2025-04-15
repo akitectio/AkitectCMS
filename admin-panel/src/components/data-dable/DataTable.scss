@@ -1,0 +1,41 @@
+.data-table {
+  margin-bottom: 2rem;
+  
+  .data-table-search {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .data-table-select {
+    width: auto;
+    min-width: 80px;
+  }
+  
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+  table {
+    width: 100%;
+    margin-bottom: 1rem;
+    
+    th {
+      font-weight: bold;
+      background-color: #f5f5f5;
+    }
+    
+    th, td {
+      padding: 0.75rem;
+      vertical-align: middle;
+    }
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    
+    button {
+      margin: 0 2px;
+    }
+  }
+}

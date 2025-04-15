@@ -19,6 +19,7 @@ interface CategoryTreeNodeProps {
   level: number;
   isSelected: boolean;
   categories: Category[]; // All categories for finding children
+  selectedCategoryId?: string;
 }
 
 const CategoryTreeNode = ({ 
@@ -27,16 +28,17 @@ const CategoryTreeNode = ({
   onDeleteCategory, 
   level, 
   isSelected,
-  categories
+  categories,
+  selectedCategoryId
 }: CategoryTreeNodeProps) => {
   const [expanded, setExpanded] = useState(true);
   
-  // Find children based on parentId
-  const children = categories.filter(c => 
-    c.parent && c.parent.id === category.id
-  );
+  // Find children - check both direct children array and parent relationship
+  const children = category.children && Array.isArray(category.children) && category.children.length > 0 
+    ? category.children // Use children array if available
+    : categories.filter(c => c.parent && c.parent.id === category.id); // Fallback to parent relationship
   
-  const hasChildren = children.length > 0;
+  const hasChildren = children && children.length > 0;
   
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -46,19 +48,27 @@ const CategoryTreeNode = ({
   return (
     <div className="category-tree-node">
       <div 
-        className={`category-tree-item ${isSelected ? 'selected' : ''}`} 
-        style={{ paddingLeft: `${level * 20}px` }}
+        className={`category-tree-item ${isSelected ? 'selected' : ''}`}
         onClick={() => onSelectCategory(category)}
       >
-        {hasChildren && (
-          <span className="toggle-icon" onClick={handleToggle}>
-            <FontAwesomeIcon icon={expanded ? faCaretDown : faCaretRight} />
-          </span>
-        )}
+        <div className="toggle-icon" onClick={handleToggle}>
+          {hasChildren ? (
+            <FontAwesomeIcon 
+              icon={expanded ? faCaretDown : faCaretRight} 
+              color="#888" 
+              size="sm" 
+            />
+          ) : (
+            <span style={{ width: '1rem', display: 'inline-block' }}></span>
+          )}
+        </div>
         
-        <span className="category-icon">
-          <FontAwesomeIcon icon={expanded ? faFolderOpen : faFolder} color="#ffc107" />
-        </span>
+        <div className="category-icon">
+          <FontAwesomeIcon 
+            icon={expanded && hasChildren ? faFolderOpen : faFolder} 
+            color="#ffc107"
+          />
+        </div>
         
         <span className="category-name">{category.name}</span>
         
@@ -100,8 +110,9 @@ const CategoryTreeNode = ({
               onSelectCategory={onSelectCategory}
               onDeleteCategory={onDeleteCategory}
               level={level + 1}
-              isSelected={isSelected && category.id === child.id}
+              isSelected={selectedCategoryId === child.id}
               categories={categories}
+              selectedCategoryId={selectedCategoryId}
             />
           ))}
         </div>
@@ -110,14 +121,24 @@ const CategoryTreeNode = ({
   );
 };
 
-// Function to build the tree structure
+// Function to build the tree structure with improved handling of parent-child relationships
 const buildCategoryTree = (categories: Category[]): Category[] => {
   // Make sure categories is an array before filtering
   if (!categories || !Array.isArray(categories)) {
     return [];
   }
-  // Find top-level categories (those without parents)
-  return categories.filter(category => !category.parent);
+  
+  // First check if we already have a proper tree structure with children arrays
+  const hasChildrenArrays = categories.some(cat => cat.children && cat.children.length > 0);
+  
+  if (hasChildrenArrays) {
+    // If children arrays are already populated, just return top-level categories
+    return categories.filter(category => !category.parent);
+  } else {
+    // Otherwise, build parent-child relationships based on parent references
+    // Find top-level categories (those without parents)
+    return categories.filter(category => !category.parent);
+  }
 };
 
 const CategoryTree = ({ 
@@ -141,6 +162,7 @@ const CategoryTree = ({
             level={0}
             isSelected={selectedCategoryId === category.id}
             categories={categories}
+            selectedCategoryId={selectedCategoryId}
           />
         ))
       ) : (
