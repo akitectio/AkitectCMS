@@ -25,6 +25,7 @@ interface Category {
   metaTitle?: string;
   metaDescription?: string;
   displayOrder?: number;
+  children?: Category[];
 }
 
 
@@ -82,14 +83,21 @@ const CategoryForm = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await apiService.get(CATEGORY_ENDPOINTS.GET_ALL);
-        const fetchedCategories = Array.isArray(response.content)
-          ? response.content
-          : Array.isArray(response)
-          ? response
-          : [];
-        console.log('Fetched categories for dropdown:', fetchedCategories);
-        setCategories(fetchedCategories);
+        // Use the tree endpoint to get hierarchical data
+        const response = await apiService.get(CATEGORY_ENDPOINTS.GET_ALL_TREE);
+        
+        // Extract categories from the response
+        const fetchedCategories = response.categories || [];
+        
+        // Flatten the categories while preserving their original data for rendering in groups
+        const flattenedCategories = fetchedCategories.map(category => ({
+          ...category,
+          // Make sure children exist for consistency
+          children: category.children || []
+        }));
+        
+        console.log('Categories loaded for dropdown with hierarchy:', flattenedCategories);
+        setCategories(flattenedCategories);
       } catch (error) {
         console.error('Error fetching categories:', error);
         toast.error(t('categories.errors.fetchFailed'));
@@ -299,12 +307,35 @@ const CategoryForm = () => {
                             placeholder={t('categories.form.noParent')}
                             allowClear
                           >
-                            {categories.filter(cat => cat.id !== id) // Exclude current category to prevent circular reference
-                              .map(category => (
-                              <Select.Option key={category.id} value={category.id}>
-                                {category.name}
-                              </Select.Option>
-                            ))}
+                            <Select.Option value="">{t('categories.form.noParent')}</Select.Option>
+                            
+                            {/* Recursive function to render categories hierarchically */}
+                            {(function renderCategoryOptions(categoryList, currentId) {
+                              return categoryList
+                                .filter(cat => cat.id !== currentId) // Prevent selecting self as parent
+                                .map(category => {
+                                  // If category has children and is not the current category being edited
+                                  if (category.children && category.children.length > 0) {
+                                    return (
+                                      <Select.OptGroup key={category.id} label={category.name}>
+                                        {/* Add the parent category itself as an option */}
+                                        <Select.Option key={category.id} value={category.id}>
+                                          {category.name}
+                                        </Select.Option>
+                                        {/* Add all child categories */}
+                                        {renderCategoryOptions(category.children, currentId)}
+                                      </Select.OptGroup>
+                                    );
+                                  }
+                                  
+                                  // If no children or is not the category being edited
+                                  return (
+                                    <Select.Option key={category.id} value={category.id}>
+                                      {category.name}
+                                    </Select.Option>
+                                  );
+                                });
+                            })(categories, id)}
                           </Select>
                         </Form.Item>
                       </Col>

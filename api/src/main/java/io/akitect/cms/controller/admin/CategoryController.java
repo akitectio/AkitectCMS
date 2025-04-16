@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -38,15 +39,45 @@ public class CategoryController {
     private CategoryRepository categoryRepository;
 
     @GetMapping
-    public ResponseEntity<Page<Category>> getAllCategories(
+    public ResponseEntity<Map<String, Object>> getAllCategories(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
         Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        Page<Category> categories = categoryRepository.findAll(pageable);
-        return ResponseEntity.ok(categories);
+        Page<Category> categoriesPage = categoryRepository.findAll(pageable);
+
+        // Convert entities to DTOs to prevent recursion issues
+        List<CategoryDTO> categoryDTOs = categoriesPage.getContent().stream()
+                .map(category -> {
+                    CategoryDTO dto = new CategoryDTO();
+                    dto.setId(category.getId());
+                    dto.setName(category.getName());
+                    dto.setSlug(category.getSlug());
+                    dto.setDescription(category.getDescription());
+                    dto.setMetaTitle(category.getMetaTitle());
+                    dto.setMetaDescription(category.getMetaDescription());
+                    dto.setFeatured(category.isFeatured());
+                    dto.setDisplayOrder(category.getDisplayOrder());
+
+                    // Only set parent ID reference, not the whole parent object
+                    if (category.getParent() != null) {
+                        dto.setParentId(category.getParent().getId());
+                    }
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        // Build response with pagination info
+        Map<String, Object> response = new HashMap<>();
+        response.put("categories", categoryDTOs);
+        response.put("currentPage", categoriesPage.getNumber());
+        response.put("totalItems", categoriesPage.getTotalElements());
+        response.put("totalPages", categoriesPage.getTotalPages());
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -170,6 +201,58 @@ public class CategoryController {
         // Create response map
         Map<String, Object> response = new HashMap<>();
         response.put("categories", categoryTree);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Search categories for Select2 components
+     * 
+     * @param q    Search query string
+     * @param page Page number (optional, zero-based)
+     * @param size Page size (optional)
+     * @return List of matching categories formatted for Select2
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Map<String, Object>> searchCategories(
+            @RequestParam String q,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        // If size is 0 or less, return all matching categories without pagination
+        if (size <= 0) {
+            // Return all matching categories
+            List<Category> categories = categoryRepository.findByNameContainingIgnoreCase(q);
+            List<Map<String, Object>> results = categories.stream()
+                    .map(category -> {
+                        Map<String, Object> result = new HashMap<>();
+                        result.put("id", category.getId().toString());
+                        result.put("text", category.getName());
+                        return result;
+                    })
+                    .collect(Collectors.toList());
+
+            response.put("results", results);
+        } else {
+            // Return paginated results
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+            Page<Category> categoryPage = categoryRepository.findByNameContainingIgnoreCase(q, pageable);
+
+            List<Map<String, Object>> results = categoryPage.getContent().stream()
+                    .map(category -> {
+                        Map<String, Object> result = new HashMap<>();
+                        result.put("id", category.getId().toString());
+                        result.put("text", category.getName());
+                        return result;
+                    })
+                    .collect(Collectors.toList());
+
+            response.put("results", results);
+            response.put("pagination", Map.of(
+                    "more", categoryPage.hasNext()));
+        }
 
         return ResponseEntity.ok(response);
     }

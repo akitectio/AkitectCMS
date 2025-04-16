@@ -43,6 +43,18 @@ export const searchCategories = async (query: string): Promise<Category[]> => {
   return response.data?.categories || [];
 };
 
+// Search categories for Select2 component
+export const searchCategoriesForSelect2 = async (q: string, page: number = 0): Promise<{
+  results: Array<{ id: string; text: string }>;
+  pagination: { more: boolean };
+}> => {
+  const response = await axios.get(`${CATEGORY_ENDPOINTS.SEARCH}?q=${encodeURIComponent(q)}&page=${page}`);
+  return {
+    results: response.data?.results || [],
+    pagination: response.data?.pagination || { more: false }
+  };
+};
+
 const categoryService = {
   getAllCategories,
   getAllCategoriesTree,
@@ -50,7 +62,8 @@ const categoryService = {
   createCategory,
   updateCategory,
   deleteCategory,
-  searchCategories // Add the new search method
+  searchCategories,
+  searchCategoriesForSelect2
 };
 
 export default categoryService;

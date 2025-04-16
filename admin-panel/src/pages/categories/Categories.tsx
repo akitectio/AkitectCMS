@@ -247,7 +247,33 @@ const Categories = () => {
     }
   };
 
+  // Function to recursively flatten categories for dropdown display
+  const renderCategoryOptions = () => {
+    // Helper function to render a category with proper indentation for hierarchy
+    const renderCategoryWithLevel = (categories: Category[], selectedId: string | null = null, level = 0, prefix = ''): JSX.Element[] => {
+      return categories
+        .filter(category => selectedId !== category.id) // Filter out the currently selected category to prevent circular references
+        .map(category => {
+          const spacer = '\u00A0\u00A0'.repeat(level); // Non-breaking spaces for indentation
+          const displayName = `${prefix}${spacer}${level > 0 ? '└ ' : ''}${category.name}`;
+          
+          const options = [
+            <Option key={category.id} value={category.id}>
+              {displayName}
+            </Option>
+          ];
+          
+          if (category.children && category.children.length > 0) {
+            options.push(...renderCategoryWithLevel(category.children, selectedId, level + 1));
+          }
+          
+          return options;
+        })
+        .flat();
+    };
 
+    return renderCategoryWithLevel(categories, selectedCategory?.id);
+  };
 
   return (
     <div>
@@ -375,13 +401,7 @@ const Categories = () => {
                     }}
                   >
                     <Option value="">{t('categories.form.noParent')}</Option>
-                    {(categories || [])
-                      .filter(cat => !selectedCategory || cat.id !== selectedCategory.id)
-                      .map(category => (
-                        <Option key={category.id} value={category.id}>
-                          {category.name}
-                        </Option>
-                      ))}
+                    {renderCategoryOptions()}
                   </Select>
                 </Form.Item>
                 

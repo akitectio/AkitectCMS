@@ -52,8 +52,14 @@ const PostForm: React.FC<PostFormProps> = ({ mode }) => {
         if (searchText.length > 0) {
           setCategorySearching(true);
           try {
-            const results = await categoryService.searchCategories(searchText);
-            setCategoryOptions(results);
+            // Use the new Select2-compatible search API
+            const { results } = await categoryService.searchCategoriesForSelect2(searchText);
+            // Map the results to match the expected format
+            const formattedResults = results.map(item => ({
+              id: item.id,
+              name: item.text
+            }));
+            setCategoryOptions(formattedResults);
           } catch (error) {
             console.error('Failed to search categories:', error);
             message.error('Failed to search categories');
@@ -93,15 +99,37 @@ const PostForm: React.FC<PostFormProps> = ({ mode }) => {
     const fetchData = async () => {
       // Fetch initial data
       try {
-        // Load initial category and tag options
+        // Load initial category and tag options - using tree endpoint for categories
         const [categoriesData, tagsData] = await Promise.all([
-          categoryService.getAllCategories(),
+          categoryService.getAllCategoriesTree(), // Using tree endpoint
           tagService.getAllTags()
         ]);
         
-        setCategories(categoriesData);
+        // Flatten the category tree for the dropdown
+        const flattenCategories = (categories: Category[]): Category[] => {
+          let result: Category[] = [];
+          categories.forEach(category => {
+            result.push({
+              id: category.id,
+              name: category.name,
+              slug: category.slug,
+              description: category.description,
+              featured: category.featured,
+              displayOrder: category.displayOrder,
+              parentId: category.parentId
+            });
+            
+            if (category.children && category.children.length > 0) {
+              result = [...result, ...flattenCategories(category.children)];
+            }
+          });
+          return result;
+        };
+        
+        const flattenedCategories = flattenCategories(categoriesData);
+        setCategories(flattenedCategories);
+        setCategoryOptions(flattenedCategories);
         setTags(tagsData);
-        setCategoryOptions(categoriesData);
         setTagOptions(tagsData);
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
