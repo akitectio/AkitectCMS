@@ -1,12 +1,13 @@
+import { BorderOutlined, CaretDownOutlined, CaretRightOutlined, CheckOutlined } from '@ant-design/icons';
 import { fetchPermissionsRequest } from '@app/store/reducers/permissions';
 import { fetchRoleRequest, resetRoleState, updateRoleRequest } from '@app/store/reducers/roles';
 import { useAppDispatch, useAppSelector } from '@app/store/store';
 import { ContentHeader } from '@components';
-import { faArrowLeft, faCheck, faSave, faSquare } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button, Card, Checkbox, Col, Divider, Form, Input, Row, Space, Spin, Typography } from 'antd';
 import { useFormik } from 'formik';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -240,9 +241,7 @@ const RoleEdit = () => {
   if (loading) {
     return (
       <div className="text-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="sr-only">Loading...</span>
-        </div>
+        <Spin size="large" />
       </div>
     );
   }
@@ -253,171 +252,161 @@ const RoleEdit = () => {
       
       <section className="content">
         <div className="container-fluid">
-          <div className="row">
-            <div className="col-12">
-              <Card>
-                <Card.Header>
-                  <h3 className="card-title">{t('roles.form.title')}</h3>
-                  <div className="card-tools">
-                    <Button 
-                      variant="secondary" 
-                      size="sm"
-                      onClick={() => navigate('/roles')}
+          <Card
+            title={
+              <Typography.Title level={4}>{t('roles.form.title')}</Typography.Title>
+            }
+            extra={
+              <Button 
+                type="default" 
+                size="middle"
+                onClick={() => navigate('/roles')}
+                icon={<FontAwesomeIcon icon={faArrowLeft} style={{ marginRight: 8 }} />}
+              >
+                {t('roles.form.backToList')}
+              </Button>
+            }
+          >
+            <Form layout="vertical" onFinish={formik.handleSubmit}>
+              <Row gutter={16}>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    label={t('roles.form.name')}
+                    validateStatus={formik.touched.name && formik.errors.name ? 'error' : ''}
+                    help={formik.touched.name && formik.errors.name ? formik.errors.name : ''}
+                  >
+                    <Input 
+                      name="name"
+                      placeholder={t('roles.form.namePlaceholder')}
+                      value={formik.values.name}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    label={t('roles.form.description')}
+                    validateStatus={formik.touched.description && formik.errors.description ? 'error' : ''}
+                    help={formik.touched.description && formik.errors.description ? formik.errors.description : ''}
+                  >
+                    <Input 
+                      name="description"
+                      placeholder={t('roles.form.descriptionPlaceholder')}
+                      value={formik.values.description}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              
+              <Form.Item>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <Typography.Text strong>{t('roles.form.selectPermissions')}</Typography.Text>
+                  <Space>
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={handleCheckAllPermissions}
+                      disabled={areAllPermissionsSelected}
+                      icon={<CheckOutlined />}
                     >
-                      <FontAwesomeIcon icon={faArrowLeft} className="mr-1" />
-                      {t('roles.form.backToList')}
+                      {t('roles.form.checkAll')}
                     </Button>
-                  </div>
-                </Card.Header>
-                <Card.Body>
-                  <Form noValidate onSubmit={formik.handleSubmit}>
-                    <Row>
-                      <Col md={6}>
-                        <Form.Group className="mb-3">
-                          <Form.Label>{t('roles.form.name')}</Form.Label>
-                          <Form.Control 
-                            type="text"
-                            name="name"
-                            placeholder={t('roles.form.namePlaceholder')}
-                            value={formik.values.name}
-                            onChange={formik.handleChange}
-                            onBlur={formik.handleBlur}
-                            isInvalid={formik.touched.name && !!formik.errors.name}
-                          />
-                          <Form.Control.Feedback type="invalid">
-                            {formik.errors.name}
-                          </Form.Control.Feedback>
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group className="mb-3">
-                          <Form.Label>{t('roles.form.description')}</Form.Label>
-                          <Form.Control 
-                            type="text"
-                            name="description"
-                            placeholder={t('roles.form.descriptionPlaceholder')}
-                            value={formik.values.description}
-                            onChange={formik.handleChange}
-                            onBlur={formik.handleBlur}
-                            isInvalid={formik.touched.description && !!formik.errors.description}
-                          />
-                          <Form.Control.Feedback type="invalid">
-                            {formik.errors.description}
-                          </Form.Control.Feedback>
-                        </Form.Group>
-                      </Col>
-                    </Row>
-                    
-                    <Form.Group className="mb-3">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <Form.Label className="mb-0">{t('roles.form.selectPermissions')}</Form.Label>
-                        <div>
-                          <Button
-                            variant="outline-primary"
-                            size="sm"
-                            className="mr-2"
-                            onClick={handleCheckAllPermissions}
-                            disabled={areAllPermissionsSelected}
-                          >
-                            <FontAwesomeIcon icon={faCheck} className="mr-1" />
-                            {t('roles.form.checkAll')}
-                          </Button>
-                          <Button
-                            variant="outline-secondary"
-                            size="sm"
-                            onClick={handleUncheckAllPermissions}
-                            disabled={formik.values.permissionIds.length === 0}
-                          >
-                            <FontAwesomeIcon icon={faSquare} className="mr-1" />
-                            {t('roles.form.uncheckAll')}
-                          </Button>
+                    <Button
+                      type="default"
+                      size="small"
+                      onClick={handleUncheckAllPermissions}
+                      disabled={formik.values.permissionIds.length === 0}
+                      icon={<BorderOutlined />}
+                    >
+                      {t('roles.form.uncheckAll')}
+                    </Button>
+                  </Space>
+                </div>
+                <div style={{ border: '1px solid #d9d9d9', padding: '12px', borderRadius: '2px', maxHeight: '400px', overflowY: 'auto' }}>
+                  {Object.keys(permissionGroups).map(groupName => (
+                    <div key={groupName} style={{ marginBottom: '16px' }}>
+                      <div 
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          padding: '8px', 
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => toggleGroupExpansion(groupName)}
+                      >
+                        <Checkbox 
+                          id={`group-${groupName}`}
+                          ref={groupCheckboxRefs[groupName]}
+                          checked={isGroupFullySelected(groupName)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleGroupSelection(groupName, !isGroupFullySelected(groupName));
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Typography.Text strong>
+                            {`${groupName.charAt(0).toUpperCase() + groupName.slice(1)} (${permissionGroups[groupName].length})`}
+                          </Typography.Text>
+                        </Checkbox>
+                        <div style={{ marginLeft: 'auto' }}>
+                          {expandedGroups[groupName] ? <CaretDownOutlined /> : <CaretRightOutlined />}
                         </div>
                       </div>
-                      <div className="border p-3 rounded" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                        {Object.keys(permissionGroups).map(groupName => (
-                          <div key={groupName} className="mb-3">
-                            <div 
-                              className="d-flex align-items-center mb-2 p-2 bg-light rounded cursor-pointer"
-                              style={{ cursor: 'pointer' }}
-                              onClick={() => toggleGroupExpansion(groupName)}
-                            >
-                              <Form.Check 
-                                type="checkbox"
-                                id={`group-${groupName}`}
-                                ref={groupCheckboxRefs[groupName]}
-                                checked={isGroupFullySelected(groupName)}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  handleGroupSelection(groupName, !isGroupFullySelected(groupName));
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                label={`${groupName.charAt(0).toUpperCase() + groupName.slice(1)} (${permissionGroups[groupName].length})`}
-                                style={{ fontWeight: 'bold' }}
-                                className="mb-0"
-                              />
-                              <div className="ml-auto">
-                                {expandedGroups[groupName] ? '▼' : '►'}
-                              </div>
+                      
+                      {expandedGroups[groupName] && (
+                        <div style={{ paddingLeft: '24px', marginTop: '8px' }}>
+                          {permissionGroups[groupName].map(permission => (
+                            <div key={permission.id} style={{ marginBottom: '8px' }}>
+                              <Checkbox 
+                                id={`permission-${permission.id}`}
+                                checked={formik.values.permissionIds.includes(permission.id)}
+                                onChange={(e) => handlePermissionChange(e, permission.id)}
+                              >
+                                <div>
+                                  <div>{permission.name}</div>
+                                  {permission.description && (
+                                    <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                                      {permission.description}
+                                    </Typography.Text>
+                                  )}
+                                </div>
+                              </Checkbox>
                             </div>
-                            
-                            {expandedGroups[groupName] && (
-                              <div className="pl-4">
-                                {permissionGroups[groupName].map(permission => (
-                                  <div key={permission.id} className="mb-2">
-                                    <Form.Check 
-                                      type="checkbox"
-                                      id={`permission-${permission.id}`}
-                                      checked={formik.values.permissionIds.includes(permission.id)}
-                                      onChange={(e) => handlePermissionChange(e, permission.id)}
-                                      label={
-                                        <div>
-                                          <div>{permission.name}</div>
-                                          {permission.description && (
-                                            <small className="text-muted">{permission.description}</small>
-                                          )}
-                                        </div>
-                                      }
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </Form.Group>
-                    
-                    <div className="d-flex justify-content-end mt-4">
-                      <Button 
-                        variant="secondary" 
-                        className="mr-2"
-                        onClick={() => navigate('/roles')}
-                      >
-                        {t('roles.form.cancel')}
-                      </Button>
-                      <Button 
-                        variant="primary" 
-                        type="submit"
-                        disabled={updating || !formik.isValid || !formik.dirty}
-                      >
-                        {updating ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                            {t('roles.form.saving')}
-                          </>
-                        ) : (
-                          <>
-                            <FontAwesomeIcon icon={faSave} className="mr-1" />
-                            {t('roles.form.submit')}
-                          </>
-                        )}
-                      </Button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </Form>
-                </Card.Body>
-              </Card>
-            </div>
-          </div>
+                  ))}
+                </div>
+              </Form.Item>
+              
+              <Divider />
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button 
+                  type="default" 
+                  style={{ marginRight: 8 }}
+                  onClick={() => navigate('/roles')}
+                >
+                  {t('roles.form.cancel')}
+                </Button>
+                <Button 
+                  type="primary" 
+                  htmlType="submit"
+                  disabled={updating || !formik.isValid || !formik.dirty}
+                  loading={updating}
+                  icon={!updating && <FontAwesomeIcon icon={faSave} style={{ marginRight: 8 }} />}
+                >
+                  {updating ? t('roles.form.saving') : t('roles.form.submit')}
+                </Button>
+              </div>
+            </Form>
+          </Card>
         </div>
       </section>
     </div>

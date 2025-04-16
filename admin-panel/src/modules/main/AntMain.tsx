@@ -72,6 +72,8 @@ const AntMain: React.FC = () => {
       setSelectedKeys(['posts']);
     } else if (path.startsWith('/categories')) {
       setSelectedKeys(['categories']);
+    } else if (path.startsWith('/tags')) {
+      setSelectedKeys(['tags']);
     }
   }, []);
 
@@ -97,6 +99,9 @@ const AntMain: React.FC = () => {
         break;
       case 'categories':
         navigate('/categories');
+        break;
+      case 'tags':
+        navigate('/tags');
         break;
       default:
         break;

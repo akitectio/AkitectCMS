@@ -99,6 +99,7 @@ export const CATEGORY_ENDPOINTS = {
   CREATE: `${API_PATHS.CATEGORIES}`,
   UPDATE: (id: string | number) => `${API_PATHS.CATEGORIES}/${id}`,
   DELETE: (id: string | number) => `${API_PATHS.CATEGORIES}/${id}`,
+  SEARCH: `${API_PATHS.CATEGORIES}/search`, // New endpoint for Select2-style search
 };
 
 // Media endpoints
@@ -125,4 +126,14 @@ export const SESSION_ENDPOINTS = {
   REVOKE_OTHER_SESSIONS: `${API_PATHS.AUTH}/sessions/revoke-others`,
   GET_USER_SESSIONS: (userId) => `${ADMIN_PREFIX}${API_PATHS.AUTH}/sessions/user/${userId}`,
   REVOKE_USER_SESSION: (userId, sessionId) => `${ADMIN_PREFIX}${API_PATHS.AUTH}/sessions/user/${userId}/session/${sessionId}`,
+};
+
+// Add Tag endpoints
+export const TAG_ENDPOINTS = {
+  GET_ALL: '/tags',
+  GET_BY_ID: (id: string | number) => `/tags/${id}`,
+  CREATE: '/tags',
+  UPDATE: (id: string | number) => `/tags/${id}`,
+  DELETE: (id: string | number) => `/tags/${id}`,
+  SEARCH: '/tags/search', // Endpoint for Select2-style tag search
 };

@@ -187,7 +187,7 @@ public class PostService {
         // Add tags if present
         if (postCreateDTO.getTagIds() != null && !postCreateDTO.getTagIds().isEmpty()) {
             Set<Tag> tags = postCreateDTO.getTagIds().stream()
-                    .map(id -> tagRepository.findById(id)
+                    .map(id -> tagRepository.findById(String.valueOf(id))
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                     "Tag not found with ID: " + id)))
                     .collect(Collectors.toSet());

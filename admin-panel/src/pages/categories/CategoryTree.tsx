@@ -1,14 +1,15 @@
 import {
-    CaretDownOutlined,
-    CaretRightOutlined,
-    DeleteOutlined,
-    EditOutlined,
-    FolderOpenOutlined,
-    FolderOutlined
+  CaretDownOutlined,
+  CaretRightOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  FolderOpenOutlined,
+  FolderOutlined
 } from '@ant-design/icons';
+import categoryService from '@app/services/categories';
+import { Category } from '@app/types/category';
 import { Button, Empty } from 'antd';
-import { useState } from 'react';
-import { Category } from '../../types/category';
+import { memo, useState } from 'react';
 import './CategoryTree.css';
 
 interface CategoryTreeProps {
@@ -16,6 +17,7 @@ interface CategoryTreeProps {
   onSelectCategory: (category: Category) => void;
   onDeleteCategory: (category: Category) => void;
   selectedCategoryId?: string;
+  onDragEnd?: (result: any) => void; // Keep for compatibility, but we won't use it
 }
 
 interface CategoryTreeNodeProps {
@@ -24,38 +26,46 @@ interface CategoryTreeNodeProps {
   onDeleteCategory: (category: Category) => void;
   level: number;
   isSelected: boolean;
-  categories: Category[]; // All categories for finding children
+  categories: Category[]; 
   selectedCategoryId?: string;
+  index: number;
 }
 
-const CategoryTreeNode = ({ 
+// Use memo to optimize rendering performance
+const CategoryTreeNode = memo(({ 
   category, 
   onSelectCategory, 
   onDeleteCategory, 
   level, 
   isSelected,
   categories,
-  selectedCategoryId
+  selectedCategoryId,
+  index
 }: CategoryTreeNodeProps) => {
   const [expanded, setExpanded] = useState(true);
-  
-  // Find children - check both direct children array and parent relationship
-  const children = category.children && Array.isArray(category.children) && category.children.length > 0 
-    ? category.children // Use children array if available
-    : categories.filter(c => c.parent && c.parent.id === category.id); // Fallback to parent relationship
-  
-  const hasChildren = children && children.length > 0;
-  
+
+  const children = category.children || [];
+  const hasChildren = children.length > 0;
+
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     setExpanded(!expanded);
   };
-  
+
+  const handleSelect = async () => {
+    try {
+      const detailedCategory = await categoryService.getCategory(category.id);
+      onSelectCategory(detailedCategory);
+    } catch (error) {
+      console.error('Error fetching category details:', error);
+    }
+  };
+
   return (
     <div className="category-tree-node">
       <div 
         className={`category-tree-item ${isSelected ? 'selected' : ''}`}
-        onClick={() => onSelectCategory(category)}
+        onClick={handleSelect}
       >
         <div className="toggle-icon" onClick={handleToggle}>
           {hasChildren ? (
@@ -82,7 +92,7 @@ const CategoryTreeNode = ({
             icon={<EditOutlined />}
             onClick={(e) => {
               e.stopPropagation();
-              onSelectCategory(category);
+              handleSelect();
             }}
             title="Edit"
             style={{ marginRight: 8 }}
@@ -104,7 +114,7 @@ const CategoryTreeNode = ({
       
       {expanded && hasChildren && (
         <div className="category-children">
-          {children.map(child => (
+          {children.map((child, childIndex) => (
             <CategoryTreeNode
               key={child.id}
               category={child}
@@ -114,47 +124,53 @@ const CategoryTreeNode = ({
               isSelected={selectedCategoryId === child.id}
               categories={categories}
               selectedCategoryId={selectedCategoryId}
+              index={childIndex}
             />
           ))}
         </div>
       )}
     </div>
   );
+});
+
+// Avoid defaultProps warning by using explicit naming
+CategoryTreeNode.displayName = 'CategoryTreeNode';
+
+// Recursive function to flatten categories (keep it for possible future use)
+const flattenCategories = (
+  categories: Category[], 
+  parentId: string | null = null, 
+  level: number = 0,
+  result: any[] = []
+) => {
+  if (!categories) return result;
+  
+  categories.forEach(category => {
+    result.push({
+      ...category,
+      level,
+      parentId
+    });
+    
+    if (category.children && category.children.length > 0) {
+      flattenCategories(category.children, category.id, level + 1, result);
+    }
+  });
+  
+  return result;
 };
 
-// Function to build the tree structure with improved handling of parent-child relationships
-const buildCategoryTree = (categories: Category[]): Category[] => {
-  // Make sure categories is an array before filtering
-  if (!categories || !Array.isArray(categories)) {
-    return [];
-  }
-  
-  // First check if we already have a proper tree structure with children arrays
-  const hasChildrenArrays = categories.some(cat => cat.children && cat.children.length > 0);
-  
-  if (hasChildrenArrays) {
-    // If children arrays are already populated, just return top-level categories
-    return categories.filter(category => !category.parent);
-  } else {
-    // Otherwise, build parent-child relationships based on parent references
-    // Find top-level categories (those without parents)
-    return categories.filter(category => !category.parent);
-  }
-};
-
-const CategoryTree = ({ 
+// Use memo for the main component as well
+const CategoryTree = memo(({ 
   categories, 
   onSelectCategory, 
   onDeleteCategory,
   selectedCategoryId
 }: CategoryTreeProps) => {
-  // Get the root categories
-  const rootCategories = buildCategoryTree(categories);
-  
   return (
-    <div className="category-tree">
-      {rootCategories.length > 0 ? (
-        rootCategories.map(category => (
+    <div className="category-tree-container">
+      {categories && categories.length > 0 ? (
+        categories.map((category, index) => (
           <CategoryTreeNode
             key={category.id}
             category={category}
@@ -164,6 +180,7 @@ const CategoryTree = ({
             isSelected={selectedCategoryId === category.id}
             categories={categories}
             selectedCategoryId={selectedCategoryId}
+            index={index}
           />
         ))
       ) : (
@@ -171,6 +188,9 @@ const CategoryTree = ({
       )}
     </div>
   );
-};
+});
+
+// Avoid defaultProps warning by using explicit naming
+CategoryTree.displayName = 'CategoryTree';
 
 export default CategoryTree;

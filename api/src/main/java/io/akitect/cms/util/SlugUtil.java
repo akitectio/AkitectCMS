@@ -34,4 +34,16 @@ public class SlugUtil {
         slug = MULTIPLE_HYPHENS.matcher(slug).replaceAll("-");
         return slug.toLowerCase(Locale.ENGLISH).trim();
     }
+
+    /**
+     * Generate a URL-friendly slug from the given string
+     * This method serves as an alias for createSlug to maintain backward
+     * compatibility
+     * 
+     * @param input String to convert to slug
+     * @return URL-friendly slug
+     */
+    public static String generateSlug(String input) {
+        return createSlug(input);
+    }
 }

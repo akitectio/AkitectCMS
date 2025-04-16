@@ -1,18 +1,19 @@
 import { EditOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import { ConfirmModal } from '@app/components/ConfirmModal';
 import categoryService from '@app/services/categories';
+import { generateSlug } from '@app/utils/slug';
 import { ContentHeader } from '@components';
 import {
-    Alert,
-    Button,
-    Card,
-    Col,
-    Form,
-    Input,
-    Row,
-    Select,
-    Spin,
-    Switch
+  Alert,
+  Button,
+  Card,
+  Col,
+  Form,
+  Input,
+  Row,
+  Select,
+  Spin,
+  Switch
 } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -53,6 +54,8 @@ const Categories = () => {
   
   // For form validation
   const [validated, setValidated] = useState<boolean>(false);
+
+  const [form] = Form.useForm();
 
   // Load categories on component mount
   useEffect(() => {
@@ -96,48 +99,68 @@ const Categories = () => {
     });
   };
 
-  // Generate slug from name
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
-
   // Auto-generate slug when name changes
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    setFormData({
-      ...formData,
-      name,
-      // Only auto-generate if slug field is empty or was auto-generated before
-      ...(formData.slug === '' || formData.slug === generateSlug(formData.name) 
-          ? { slug: generateSlug(name) } 
-          : {})
-    });
+    setFormData(prev => ({
+      ...prev,
+      name
+    }));
+  };
+
+  // Generate slug when name field is blurred (user finished typing)
+  const handleNameBlur = () => {
+    const name = form.getFieldValue('name');
+    const currentSlug = form.getFieldValue('slug');
+    
+    // Only auto-generate slug if it's empty or was auto-generated before
+    if (!currentSlug || currentSlug === generateSlug(formData.name)) {
+      const newSlug = generateSlug(name);
+      form.setFieldsValue({ slug: newSlug });
+      
+      // Also update formData for consistency
+      setFormData(prev => ({
+        ...prev,
+        slug: newSlug
+      }));
+    }
   };
 
   // Handle category selection from tree
   const handleCategorySelect = (category: Category) => {
+    console.log('Selected category:', category);
     setSelectedCategory(category);
-    setFormData({
+    
+    // Extract parentId - could be in either format
+    let parentId = '';
+    if (category.parentId) {
+      parentId = category.parentId;
+    } else if (category.parent && category.parent.id) {
+      parentId = category.parent.id;
+    }
+    
+    console.log('Extracted parentId:', parentId);
+    
+    const formValues = {
       name: category.name,
       slug: category.slug,
       description: category.description || '',
       metaTitle: category.metaTitle || '',
       metaDescription: category.metaDescription || '',
-      parentId: category.parent ? category.parent.id : '',
+      parentId: parentId,
       featured: category.featured,
       displayOrder: category.displayOrder
-    });
+    };
+    
+    setFormData(formValues);
+    form.setFieldsValue(formValues);
     setValidated(false);
   };
 
   // Handle new category button click
   const handleNewCategory = () => {
     setSelectedCategory(null);
-    setFormData({
+    const emptyValues = {
       name: '',
       slug: '',
       description: '',
@@ -146,26 +169,22 @@ const Categories = () => {
       parentId: '',
       featured: false,
       displayOrder: 0
-    });
+    };
+    
+    setFormData(emptyValues);
+    form.setFieldsValue(emptyValues);
     setValidated(false);
   };
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    
-    if (form.checkValidity() === false) {
-      e.stopPropagation();
-      setValidated(true);
-      return;
-    }
-    
+  const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
+      // Format data for API - transforming parentId into a parent object structure
       const categoryData = {
-        ...formData,
-        parentId: formData.parentId || null
+        ...values,
+        parent: values.parentId ? { id: values.parentId } : null,
+        parentId: undefined // Remove the parentId field as we're using parent object instead
       };
       
       if (selectedCategory) {
@@ -227,6 +246,8 @@ const Categories = () => {
       setShowDeleteModal(false);
     }
   };
+
+
 
   return (
     <div>
@@ -300,29 +321,31 @@ const Categories = () => {
                 </div>
               )}
               
-              <Form layout="vertical" onFinish={handleSubmit}>
+              <Form 
+                form={form}
+                layout="vertical" 
+                onFinish={handleSubmit}
+                initialValues={formData}
+              >
                 <Form.Item
                   label={t('categories.form.name')}
                   name="name"
-                  initialValue={formData.name}
                   rules={[{ required: true, message: t('validation.required') }]}
                 >
                   <Input
                     placeholder={t('categories.form.namePlaceholder')}
-                    value={formData.name}
                     onChange={handleNameChange}
+                    onBlur={handleNameBlur}
                   />
                 </Form.Item>
                 
                 <Form.Item
                   label={t('categories.form.slug')}
                   name="slug"
-                  initialValue={formData.slug}
                   rules={[{ required: true, message: t('validation.required') }]}
                 >
                   <Input
                     placeholder={t('categories.form.slugPlaceholder')}
-                    value={formData.slug}
                     onChange={(e) => handleChange(e)}
                   />
                 </Form.Item>
@@ -330,12 +353,10 @@ const Categories = () => {
                 <Form.Item
                   label={t('categories.form.description')}
                   name="description"
-                  initialValue={formData.description}
                 >
                   <TextArea
                     rows={3}
                     placeholder={t('categories.form.descriptionPlaceholder')}
-                    value={formData.description}
                     onChange={(e) => handleChange(e)}
                   />
                 </Form.Item>
@@ -343,13 +364,15 @@ const Categories = () => {
                 <Form.Item
                   label={t('categories.form.parentCategory')}
                   name="parentId"
-                  initialValue={formData.parentId}
                 >
                   <Select
                     placeholder={t('categories.form.noParent')}
                     allowClear
-                    value={formData.parentId}
-                    onChange={(value) => setFormData({...formData, parentId: value})}
+                    value={formData.parentId || undefined}
+                    onChange={(value) => {
+                      console.log('Changing parent category to:', value);
+                      setFormData({...formData, parentId: value});
+                    }}
                   >
                     <Option value="">{t('categories.form.noParent')}</Option>
                     {(categories || [])
@@ -367,12 +390,10 @@ const Categories = () => {
                     <Form.Item
                       label={t('categories.form.displayOrder')}
                       name="displayOrder"
-                      initialValue={formData.displayOrder}
                     >
                       <Input
                         type="number"
                         min={0}
-                        value={formData.displayOrder}
                         onChange={(e) => handleChange(e)}
                       />
                     </Form.Item>
@@ -382,10 +403,8 @@ const Categories = () => {
                       label={t('categories.form.featured')}
                       name="featured"
                       valuePropName="checked"
-                      initialValue={formData.featured}
                     >
                       <Switch
-                        checked={formData.featured}
                         onChange={handleFeaturedChange}
                       />
                     </Form.Item>
@@ -400,11 +419,9 @@ const Categories = () => {
                 <Form.Item
                   label={t('categories.form.metaTitle')}
                   name="metaTitle"
-                  initialValue={formData.metaTitle}
                 >
                   <Input
                     placeholder={t('categories.form.metaTitlePlaceholder')}
-                    value={formData.metaTitle}
                     onChange={(e) => handleChange(e)}
                   />
                 </Form.Item>
@@ -412,12 +429,10 @@ const Categories = () => {
                 <Form.Item
                   label={t('categories.form.metaDescription')}
                   name="metaDescription"
-                  initialValue={formData.metaDescription}
                 >
                   <TextArea
                     rows={2}
                     placeholder={t('categories.form.metaDescriptionPlaceholder')}
-                    value={formData.metaDescription}
                     onChange={(e) => handleChange(e)}
                   />
                 </Form.Item>

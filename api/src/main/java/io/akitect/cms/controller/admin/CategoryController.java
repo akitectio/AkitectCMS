@@ -49,6 +49,42 @@ public class CategoryController {
         return ResponseEntity.ok(categories);
     }
 
+    /**
+     * Get a category by ID
+     *
+     * @param id Category ID
+     * @return Category details if found
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getCategoryById(@PathVariable UUID id) {
+        Optional<Category> categoryOpt = categoryRepository.findById(id);
+        if (categoryOpt.isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Category not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+
+        Category category = categoryOpt.get();
+
+        // Chuyển đổi entity thành DTO để tránh lỗi lazy loading và vòng lặp vô hạn
+        CategoryDTO categoryDTO = new CategoryDTO();
+        categoryDTO.setId(category.getId());
+        categoryDTO.setName(category.getName());
+        categoryDTO.setSlug(category.getSlug());
+        categoryDTO.setDescription(category.getDescription());
+        categoryDTO.setMetaTitle(category.getMetaTitle());
+        categoryDTO.setMetaDescription(category.getMetaDescription());
+        categoryDTO.setFeatured(category.isFeatured());
+        categoryDTO.setDisplayOrder(category.getDisplayOrder());
+
+        // Chỉ lấy ID của parent nếu có, không lấy toàn bộ đối tượng
+        if (category.getParent() != null) {
+            categoryDTO.setParentId(category.getParent().getId());
+        }
+
+        return ResponseEntity.ok(categoryDTO);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> createCategory(@RequestBody Category category) {

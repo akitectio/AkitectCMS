@@ -14,6 +14,7 @@ import PostsRoutes from './posts/Routes';
 import PrivateRoute from './PrivateRoute';
 import PublicRoute from './PublicRoute';
 import RolesRoutes from './roles/Routes';
+import TagsRoutes from './tags/Routes';
 import UsersRoutes from './users/Routes';
 
 const AppRoutes = () => {
@@ -40,6 +41,7 @@ const AppRoutes = () => {
           <Route path="/categories/*" element={<CategoriesRoutes />} />
           <Route path="/permissions/*" element={<PermissionsRoutes />} />
           <Route path="/posts/*" element={<PostsRoutes />} />
+          <Route path="/tags/*" element={<TagsRoutes />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/" element={<Dashboard />} />

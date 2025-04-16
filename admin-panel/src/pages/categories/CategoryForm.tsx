@@ -6,9 +6,9 @@ import { createCategory, updateCategory } from '@app/store/reducers/category';
 import { generateSlug } from '@app/utils/slug';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button, Card, Checkbox, Col, Form, Input, InputNumber, Row, Select } from 'antd';
 import { Formik } from 'formik';
 import { useEffect, useState } from 'react';
-import { Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -24,6 +24,7 @@ interface Category {
   featured?: boolean;
   metaTitle?: string;
   metaDescription?: string;
+  displayOrder?: number;
 }
 
 
@@ -43,6 +44,7 @@ const CategoryForm = () => {
     featured: boolean;
     metaTitle: string;
     metaDescription: string;
+    displayOrder: number;
   }>({
     name: '',
     slug: '',
@@ -51,6 +53,7 @@ const CategoryForm = () => {
     featured: false,
     metaTitle: '',
     metaDescription: '',
+    displayOrder: 0,
   });
   
   const dispatch = useDispatch();
@@ -66,9 +69,15 @@ const CategoryForm = () => {
     featured: Yup.boolean().notRequired(),
     metaTitle: Yup.string().notRequired(),
     metaDescription: Yup.string().notRequired(),
+    displayOrder: Yup.number().integer().min(0).notRequired(),
   });
   
-
+  useEffect(() => {
+    // This effect will run whenever initialValues.parentId changes
+    // to help debug the parent category selection issue
+    console.log('Current parentId in initialValues:', initialValues.parentId);
+  }, [initialValues.parentId]);
+  
   // Fetch all categories (for parent category dropdown)
   useEffect(() => {
     const fetchCategories = async () => {
@@ -79,6 +88,7 @@ const CategoryForm = () => {
           : Array.isArray(response)
           ? response
           : [];
+        console.log('Fetched categories for dropdown:', fetchedCategories);
         setCategories(fetchedCategories);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -95,17 +105,42 @@ const CategoryForm = () => {
       if (isEditMode && id) {
         try {
           setLoading(true);
-          const category = await apiService.get(CATEGORY_ENDPOINTS.GET_BY_ID(id));
+          console.log(`Fetching category with ID: ${id}`);
+          const response = await apiService.get(CATEGORY_ENDPOINTS.GET_BY_ID(id));
+          console.log('Category data received:', response);
           
-          setInitialValues({
-            name: category.name || '',
-            slug: category.slug || '',
-            description: category.description || '',
-            parentId: category.parentId || '',
-            featured: category.featured || false,
-            metaTitle: category.metaTitle || '',
-            metaDescription: category.metaDescription || '',
-          });
+          if (!response || typeof response !== 'object') {
+            console.error('Invalid category data received:', response);
+            toast.error(t('categories.errors.invalidData'));
+            navigate('/categories');
+            return;
+          }
+          
+          // Extract parentId with a more robust approach
+          let parentId = '';
+          if (response.parentId) {
+            // If parentId is directly in the response
+            parentId = response.parentId;
+          } else if (response.parent && response.parent.id) {
+            // If parent is an object with an id
+            parentId = response.parent.id;
+          }
+          
+          console.log('Parent ID extracted:', parentId);
+          
+          const newValues = {
+            name: response.name || '',
+            slug: response.slug || '',
+            description: response.description || '',
+            parentId: parentId, // Use the extracted parentId
+            featured: Boolean(response.featured), // Convert to boolean explicitly
+            metaTitle: response.metaTitle || '',
+            metaDescription: response.metaDescription || '',
+            displayOrder: response.displayOrder || 0,
+          };
+          
+          console.log('Setting form with values:', newValues);
+          setInitialValues(newValues);
         } catch (error) {
           console.error('Error fetching category:', error);
           toast.error(t('categories.errors.fetchFailed'));
@@ -129,14 +164,21 @@ const CategoryForm = () => {
         values.slug = generateSlug(values.name);
       }
       
+      // Format data for API - transforming parentId into a parent object structure
+      const categoryData = {
+        ...values,
+        parent: values.parentId ? { id: values.parentId } : null,
+        parentId: undefined // Remove the parentId field as we're using parent object instead
+      };
+      
       if (isEditMode && id) {
         // Update existing category
-        await apiService.put(CATEGORY_ENDPOINTS.UPDATE(id), values);
-        dispatch(updateCategory(values));
+        await apiService.put(CATEGORY_ENDPOINTS.UPDATE(id), categoryData);
+        dispatch(updateCategory({...values, id}));
         toast.success(t('categories.messages.updateSuccess'));
       } else {
         // Create new category
-        await apiService.post(CATEGORY_ENDPOINTS.CREATE, values);
+        await apiService.post(CATEGORY_ENDPOINTS.CREATE, categoryData);
         dispatch(createCategory(values));
         toast.success(t('categories.messages.createSuccess'));
       }
@@ -177,199 +219,186 @@ const CategoryForm = () => {
               dirty,
               setFieldValue,
             }) => (
-              <Form noValidate onSubmit={handleSubmit}>
+              <Form layout="vertical" onFinish={handleSubmit}>
                 <Card>
-                  <Card.Header>
-                    <h3 className="card-title">
-                      {isEditMode 
-                        ? t('categories.editTitle', { name: initialValues.name }) 
-                        : t('categories.createTitle')}
-                    </h3>
-                  </Card.Header>
+                  <Card.Meta
+                    title={isEditMode 
+                      ? t('categories.editTitle', { name: initialValues.name }) 
+                      : t('categories.createTitle')}
+                  />
                   
-                  <Card.Body>
-                    <div className="position-relative">
-                      <Row>
-                        <Col md={6}>
-                          <Form.Group className="mb-3">
-                            <Form.Label htmlFor="name">
-                              {t('categories.form.name')} <span className="text-danger">*</span>
-                            </Form.Label>
-                            <Form.Control
-                              id="name"
-                              name="name"
-                              value={values.name}
-                              onChange={(e) => {
-                                handleChange(e);
-                                // Auto-generate slug if slug is empty or hasn't been manually edited
-                                if (!values.slug || values.slug === generateSlug(values.name)) {
-                                  setFieldValue('slug', generateSlug(e.target.value));
-                                }
-                              }}
-                              onBlur={handleBlur}
-                              isInvalid={touched.name && !!errors.name}
-                              placeholder={t('categories.form.namePlaceholder')}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                              {errors.name}
-                            </Form.Control.Feedback>
-                          </Form.Group>
-                        </Col>
-                        
-                        <Col md={6}>
-                          <Form.Group className="mb-3">
-                            <Form.Label htmlFor="slug">
-                              {t('categories.form.slug')}
-                            </Form.Label>
-                            <Form.Control
-                              id="slug"
-                              name="slug"
-                              value={values.slug}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              isInvalid={touched.slug && !!errors.slug}
-                              placeholder={t('categories.form.slugPlaceholder')}
-                            />
-                            <Form.Text className="text-muted">
-                              {t('categories.form.slugPlaceholder')}
-                            </Form.Text>
-                            <Form.Control.Feedback type="invalid">
-                              {errors.slug}
-                            </Form.Control.Feedback>
-                          </Form.Group>
-                        </Col>
-                      </Row>
+                  <div className="position-relative mt-4">
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <Form.Item
+                          label={t('categories.form.name')}
+                          validateStatus={touched.name && errors.name ? 'error' : ''}
+                          help={touched.name && errors.name}
+                        >
+                          <Input
+                            name="name"
+                            value={values.name}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder={t('categories.form.namePlaceholder')}
+                          />
+                        </Form.Item>
+                      </Col>
                       
-                      <Row>
-                        <Col md={12}>
-                          <Form.Group className="mb-3">
-                            <Form.Label htmlFor="description">
-                              {t('categories.form.description')}
-                            </Form.Label>
-                            <Form.Control
-                              as="textarea"
-                              rows={3}
-                              id="description"
-                              name="description"
-                              value={values.description}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              isInvalid={touched.description && !!errors.description}
-                              placeholder={t('categories.form.descriptionPlaceholder')}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                              {errors.description}
-                            </Form.Control.Feedback>
-                          </Form.Group>
-                        </Col>
-                      </Row>
+                      <Col span={12}>
+                        <Form.Item
+                          label={t('categories.form.slug')}
+                          validateStatus={touched.slug && errors.slug ? 'error' : ''}
+                          help={touched.slug && errors.slug}
+                        >
+                          <Input
+                            name="slug"
+                            value={values.slug}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder={t('categories.form.slugPlaceholder')}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    
+                    <Row gutter={16}>
+                      <Col span={24}>
+                        <Form.Item
+                          label={t('categories.form.description')}
+                          validateStatus={touched.description && errors.description ? 'error' : ''}
+                          help={touched.description && errors.description}
+                        >
+                          <Input.TextArea
+                            name="description"
+                            rows={3}
+                            value={values.description}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder={t('categories.form.descriptionPlaceholder')}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <Form.Item
+                          label={t('categories.form.parentCategory')}
+                          validateStatus={touched.parentId && errors.parentId ? 'error' : ''}
+                          help={touched.parentId && errors.parentId}
+                        >
+                          <Select
+                            name="parentId"
+                            value={values.parentId || undefined}
+                            onChange={(value) => {
+                              console.log('Selecting parent category:', value);
+                              setFieldValue('parentId', value);
+                            }}
+                            onBlur={() => handleBlur({ target: { name: 'parentId' } })}
+                            placeholder={t('categories.form.noParent')}
+                            allowClear
+                          >
+                            {categories.filter(cat => cat.id !== id) // Exclude current category to prevent circular reference
+                              .map(category => (
+                              <Select.Option key={category.id} value={category.id}>
+                                {category.name}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                      </Col>
                       
-                      <Row>
-                        <Col md={6}>
-                          <Form.Group className="mb-3">
-                            <Form.Label htmlFor="parentId">
-                              {t('categories.form.parentCategory')}
-                            </Form.Label>
-                            <Form.Control
-                              as="select"
-                              id="parentId"
-                              name="parentId"
-                              value={values.parentId}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              isInvalid={touched.parentId && !!errors.parentId}
-                            >
-                              <option value="">{t('categories.form.noParent')}</option>
-                              {categories.filter(cat => cat.id !== id) // Exclude current category to prevent circular reference
-                                .map(category => (
-                                <option key={category.id} value={category.id}>
-                                  {category.name}
-                                </option>
-                              ))}
-                            </Form.Control>
-                            <Form.Text className="text-muted">
-                              {t('categories.form.selectParentCategory')}
-                            </Form.Text>
-                          </Form.Group>
-                        </Col>
-                        
-                        <Col md={6}>
-                          <Form.Group className="mb-3">
-                            <Form.Check
-                              type="checkbox"
-                              id="featured"
-                              label={t('categories.form.featured')}
-                              checked={values.featured}
-                              onChange={(e) => setFieldValue('featured', e.target.checked)}
-                              className="mt-4"
-                            />
-                          </Form.Group>
-                        </Col>
-                      </Row>
+                      <Col span={6}>
+                        <Form.Item
+                          label={t('categories.form.displayOrder') || 'Display Order'}
+                          validateStatus={touched.displayOrder && errors.displayOrder ? 'error' : ''}
+                          help={touched.displayOrder && errors.displayOrder}
+                        >
+                          <InputNumber
+                            name="displayOrder"
+                            value={values.displayOrder}
+                            onChange={(value) => setFieldValue('displayOrder', value)}
+                            onBlur={() => handleBlur({ target: { name: 'displayOrder' } })}
+                            min={0}
+                            style={{ width: '100%' }}
+                          />
+                        </Form.Item>
+                      </Col>
                       
-                      <hr />
-                      <h5>{t('categories.form.seoSection')}</h5>
+                      <Col span={6}>
+                        <Form.Item
+                          label=" "
+                          className="mt-2"
+                        >
+                          <Checkbox
+                            name="featured"
+                            checked={values.featured}
+                            onChange={(e) => setFieldValue('featured', e.target.checked)}
+                          >
+                            {t('categories.form.featured')}
+                          </Checkbox>
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    
+                    <hr />
+                    <h5>{t('categories.form.seoSection')}</h5>
+                    
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <Form.Item
+                          label={t('categories.form.metaTitle')}
+                          validateStatus={touched.metaTitle && errors.metaTitle ? 'error' : ''}
+                          help={touched.metaTitle && errors.metaTitle}
+                        >
+                          <Input
+                            name="metaTitle"
+                            value={values.metaTitle}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder={t('categories.form.metaTitlePlaceholder')}
+                          />
+                        </Form.Item>
+                      </Col>
                       
-                      <Row>
-                        <Col md={6}>
-                          <Form.Group className="mb-3">
-                            <Form.Label htmlFor="metaTitle">
-                              {t('categories.form.metaTitle')}
-                            </Form.Label>
-                            <Form.Control
-                              id="metaTitle"
-                              name="metaTitle"
-                              value={values.metaTitle}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              isInvalid={touched.metaTitle && !!errors.metaTitle}
-                              placeholder={t('categories.form.metaTitlePlaceholder')}
-                            />
-                          </Form.Group>
-                        </Col>
-                        
-                        <Col md={6}>
-                          <Form.Group className="mb-3">
-                            <Form.Label htmlFor="metaDescription">
-                              {t('categories.form.metaDescription')}
-                            </Form.Label>
-                            <Form.Control
-                              as="textarea"
-                              rows={2}
-                              id="metaDescription"
-                              name="metaDescription"
-                              value={values.metaDescription}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              isInvalid={touched.metaDescription && !!errors.metaDescription}
-                              placeholder={t('categories.form.metaDescriptionPlaceholder')}
-                            />
-                          </Form.Group>
-                        </Col>
-                      </Row>
-                      
-                      {loading && <OverlayLoading />}
-                    </div>
-                  </Card.Body>
+                      <Col span={12}>
+                        <Form.Item
+                          label={t('categories.form.metaDescription')}
+                          validateStatus={touched.metaDescription && errors.metaDescription ? 'error' : ''}
+                          help={touched.metaDescription && errors.metaDescription}
+                        >
+                          <Input.TextArea
+                            name="metaDescription"
+                            rows={2}
+                            value={values.metaDescription}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder={t('categories.form.metaDescriptionPlaceholder')}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    
+                    {loading && <OverlayLoading />}
+                  </div>
                   
-                  <Card.Footer>
-                    <div className="d-flex justify-content-between">
-                      <Button
-                        variant="secondary"
-                        onClick={() => navigate('/categories')}
-                      >
-                        {t('common.cancel')}
-                      </Button>
-                      <Button
-                        variant="primary"
-                        type="submit"
-                        disabled={loading || !(isValid && (dirty || isEditMode))}
-                      >
-                        <FontAwesomeIcon icon={faSave} className="mr-1" />
-                        {t('common.save')}
-                      </Button>
-                    </div>
-                  </Card.Footer>
+                  <div className="d-flex justify-content-between">
+                    <Button
+                      type="default"
+                      onClick={() => navigate('/categories')}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      disabled={loading || !(isValid && (dirty || isEditMode))}
+                    >
+                      <FontAwesomeIcon icon={faSave} className="mr-1" />
+                      {t('common.save')}
+                    </Button>
+                  </div>
                 </Card>
               </Form>
             )}

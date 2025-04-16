@@ -2,10 +2,8 @@ package io.akitect.cms.util;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 import io.akitect.cms.dto.CategoryDTO;
 import io.akitect.cms.model.Category;
@@ -19,36 +17,47 @@ public class CategoryMapper {
      * @return List of top-level CategoryDTOs with their children properly nested
      */
     public static List<CategoryDTO> toCategoryTreeDTOs(List<Category> categories) {
-        List<CategoryDTO> rootCategories = new ArrayList<>();
-        Map<UUID, CategoryDTO> dtoMap = new HashMap<>();
+        // Tạo một danh sách riêng để tránh ảnh hưởng đến danh sách gốc
+        List<Category> workingList = new ArrayList<>(categories);
 
-        // First pass: Create all DTOs without children
-        for (Category category : categories) {
-            CategoryDTO dto = toCategoryDTO(category);
-            dtoMap.put(category.getId(), dto);
+        // Lọc chỉ lấy các danh mục gốc (không có danh mục cha)
+        List<Category> rootCategories = workingList.stream()
+                .filter(cat -> cat.getParent() == null)
+                .collect(Collectors.toList());
 
-            // Check if it's a root category (no parent)
-            if (category.getParent() == null) {
-                rootCategories.add(dto);
-            }
-        }
+        // Ánh xạ các danh mục gốc thành DTO
+        List<CategoryDTO> rootDTOs = rootCategories.stream()
+                .map(root -> convertToTreeDTO(root, workingList))
+                .collect(Collectors.toList());
 
-        // Second pass: Build the hierarchy
-        for (Category category : categories) {
-            if (category.getParent() != null) {
-                CategoryDTO childDto = dtoMap.get(category.getId());
-                CategoryDTO parentDto = dtoMap.get(category.getParent().getId());
+        // Sắp xếp theo thứ tự hiển thị
+        sortCategoryTreeByDisplayOrder(rootDTOs);
 
-                if (parentDto != null) {
-                    parentDto.getChildren().add(childDto);
-                }
-            }
-        }
+        return rootDTOs;
+    }
 
-        // Sort all categories by display order
-        sortCategoryTreeByDisplayOrder(rootCategories);
+    /**
+     * Đệ quy chuyển đổi một danh mục và tất cả con của nó thành cấu trúc cây DTO
+     * mà không gây ra đệ quy vô hạn
+     */
+    private static CategoryDTO convertToTreeDTO(Category category, List<Category> allCategories) {
+        // Tạo DTO cho danh mục hiện tại
+        CategoryDTO dto = toCategoryDTO(category);
 
-        return rootCategories;
+        // Tìm tất cả các danh mục con trực tiếp của danh mục hiện tại
+        List<Category> children = allCategories.stream()
+                .filter(c -> c.getParent() != null && category.getId().equals(c.getParent().getId()))
+                .collect(Collectors.toList());
+
+        // Ánh xạ đệ quy các danh mục con
+        List<CategoryDTO> childDTOs = children.stream()
+                .map(child -> convertToTreeDTO(child, allCategories))
+                .collect(Collectors.toList());
+
+        // Thêm danh sách con vào DTO hiện tại
+        dto.setChildren(childDTOs);
+
+        return dto;
     }
 
     /**

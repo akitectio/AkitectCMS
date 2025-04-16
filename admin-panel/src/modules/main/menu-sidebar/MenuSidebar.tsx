@@ -55,6 +55,11 @@ export const MENU: IMenuItem[] = [
     icon: 'fas fa-folder nav-icon',
     path: '/categories',
   },
+  {
+    name: 'Tags',
+    icon: 'fas fa-tags nav-icon',
+    path: '/tags',
+  },
 ];
 
 const MENU_WIDTH = 250;
